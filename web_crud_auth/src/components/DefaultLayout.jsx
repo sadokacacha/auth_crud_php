@@ -12,7 +12,9 @@ const DefaultLayout = () => {
     
     
     }
-
+const onLogout = (event) => { 
+event.preventDefault()
+}
 
   return (
     <div  id='defaultLayout'>
@@ -30,7 +32,11 @@ const DefaultLayout = () => {
                 header
             </div>
             <div>
-                user info
+
+  {user.name}
+            <a href='#' onClick={onLogout} className='btn-logout'>logout</a>
+
+
             </div>
         </header>
         <main>
