@@ -23,7 +23,6 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // If you’re using Sanctum’s personal access tokens:
         $token = $user->createToken('app-token')->plainTextToken;
 
         return response()->json([
@@ -31,4 +30,16 @@ class AuthController extends Controller
             'token' => $token
         ], 200);
     }
+
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+    
+        return response()->json([
+            'message' => 'Logged out successfully'
+        ]);
+    }
+
+
 }

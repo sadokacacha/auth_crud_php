@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useEffect } from "react";
+
 import './login.css';
 import logo from '../assets/logo.png';
 import axiosClient from '../axios-client';
@@ -35,6 +37,14 @@ const Login = () => {
       }
     }
   };
+  useEffect(() => {
+    const token = localStorage.getItem("ACCESS_TOKEN");
+    const role = localStorage.getItem("USER_ROLE");
+  
+    if (token && role) {
+      navigate(`/${role}/dashboard`);
+    }
+  }, []);
 
   return (
     <div className="login-container">
