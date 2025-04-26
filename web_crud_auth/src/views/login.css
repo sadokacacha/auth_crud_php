@@ -26,11 +26,12 @@
     z-index: 2;
   }
   
-  /* Logo */
   .logo {
-    width: 100px;
-    display: block;
-    margin: 0 auto 20px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
+    height: 120px; 
   }
   
   /* Heading */
