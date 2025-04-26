@@ -3,7 +3,6 @@ import axios from 'axios';
 const axiosClient = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
 });
-console.log('API URL:', import.meta.env.VITE_API_BASE_URL);
 
 
 
@@ -17,6 +16,8 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+
+
 // Response interceptor: handle 401 errors
 axiosClient.interceptors.response.use(
   (response) => response,
@@ -27,5 +28,9 @@ axiosClient.interceptors.response.use(
     throw error;
   }
 );
+
+
+
+
 
 export default axiosClient;

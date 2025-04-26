@@ -3,6 +3,13 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\StudentDashboardController;
+
+
+
+use App\Http\Controllers\Api\UserController;
+
+
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,5 +25,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
     Route::middleware('role:teacher')->get('/teacher/dashboard', [TeacherDashboardController::class, 'index']);
     Route::middleware('role:student')->get('/student/dashboard', [StudentDashboardController::class, 'index']);
+
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/users',  [UserController::class,'index']);
+        Route::post('/users', [UserController::class,'store']);
+    });
+
+
+
 });
 

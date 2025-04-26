@@ -6,6 +6,8 @@ import DashboardLayout from './components/DashboardLayout';
 import AdminDashboard   from './views/admin/AdminDashboard';
 import TeacherDashboard from './views/teacher/TeacherDashboard';
 import StudentDashboard from './views/student/StudentDashboard';
+import UserManagement from './views/admin/UserManagement';
+import AddUser from './views/admin/AddUser';
 
 export default function App() {
   return (
@@ -18,7 +20,16 @@ export default function App() {
         </ProtectedRoute>
       }>
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="users"     element={<UserManagement/>} />
+        <Route path="users/new" element={<AddUser/>} />
+
       </Route>
+
+
+
+
+
+
 
       <Route path="/teacher" element={
         <ProtectedRoute role="teacher">
