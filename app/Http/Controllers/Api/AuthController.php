@@ -14,13 +14,22 @@ class AuthController extends Controller
         $credentials = $request->validated();
 
         if (!Auth::attempt($credentials)) {
-            return response(['message' => 'Invalid credentials'], 401);
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         $user = Auth::user();
         $token = $user->createToken('main')->plainTextToken;
 
-        return response(compact('user', 'token'), 200);
+        return response()->json([
+            'user' => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                // Spatie method to get role names:
+                'role'  => $user->getRoleNames()->first(),
+            ],
+            'token' => $token,
+        ], 200);
     }
 
     public function Logout(Request $request)
