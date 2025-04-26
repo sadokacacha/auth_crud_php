@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import axiosClient from '../../axios-client';
 import { useNavigate } from 'react-router-dom';
-
 export default function AddUser() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
