@@ -30,8 +30,7 @@ export default function NavBar() {
       </div>
 
       <nav className="nav-links">
-        <Link to={`/${role}/dashboard`}> Home</Link>
-        <Link to={`/${role}/profile`}> Profile</Link>
+        <Link to={`/${role}/dashboard`}> dashboard</Link>
 
         {role === 'admin' && (
           <>

@@ -8,6 +8,7 @@ import TeacherDashboard from './views/teacher/TeacherDashboard';
 import StudentDashboard from './views/student/StudentDashboard';
 import UserManagement from './views/admin/UserManagement';
 import AddUser from './views/admin/AddUser';
+import ViewUser from './views/admin/ViewUser';
 
 export default function App() {
   return (
@@ -22,6 +23,8 @@ export default function App() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users"     element={<UserManagement/>} />
         <Route path="users/new" element={<AddUser/>} />
+        <Route path="users/:id" element={<ViewUser/>} />
+
 
       </Route>
 

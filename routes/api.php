@@ -27,11 +27,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:student')->get('/student/dashboard', [StudentDashboardController::class, 'index']);
 
 
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/users',  [UserController::class,'index']);
-        Route::post('/users', [UserController::class,'store']);
+    Route::middleware(['auth:sanctum','role:admin'])->group(function () {
+        Route::get('/users',        [UserController::class,'index']);
+        Route::post('/users',       [UserController::class,'store']);
+        Route::get('/users/{id}',   [UserController::class,'show']);    // ← new
+        Route::put('/users/{id}',   [UserController::class,'update']);
+        Route::delete('/users/{id}',[UserController::class,'destroy']);
     });
-
+    
 
 
 });

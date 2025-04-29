@@ -26,6 +26,31 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+
+
+
+
+    // GET /api/users/{id}
+    public function show($id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+
+        return response()->json([
+            'id'    => $user->id,
+            'name'  => $user->name,
+            'email' => $user->email,
+            'role'  => $user->roles->pluck('name')->first(),
+
+        ]);
+    
+}
+
+
+
+
+
+
+
     // POST /api/users
     
     public function store(Request $request)
