@@ -3,6 +3,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\StudentDashboardController;
+use App\Http\Controllers\Api\TeacherController;
 
 
 
@@ -35,7 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/users/{id}',[UserController::class,'destroy']);
     });
     
-
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::apiResource('teachers', TeacherController::class);
+    });
 
 });
 

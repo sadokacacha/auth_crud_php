@@ -18,4 +18,10 @@ class User extends Authenticatable
         'role',
     ];
 
+
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
 }
