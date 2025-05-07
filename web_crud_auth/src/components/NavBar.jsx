@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosClient from "../axios-client";
 import logo from "../assets/logo.png";
-import "./Navbar.css";
+import "./NavBar.css"; 
 
 export default function NavBar() {
   const navigate = useNavigate();

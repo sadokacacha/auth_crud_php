@@ -1,15 +1,16 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens; // ← Add this line
-use Spatie\Permission\Traits\HasRoles; // ← Also for Spatie roles
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable , HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
         'name',
@@ -18,10 +19,18 @@ class User extends Authenticatable
         'role',
     ];
 
-
     public function teacher()
     {
         return $this->hasOne(Teacher::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_user');
+    }
 }
