@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-
+import { useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../../axios-client';
-import { Link } from 'react-router-dom';
-import './UserManagement.css'; 
+import './UserManagement.css';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -16,7 +14,6 @@ export default function UserManagement() {
       .catch(console.error);
   }, []);
 
-  // Filter users based on selected role
   const filteredUsers = users.filter(u => u.role === filteredRole);
 
   return (
@@ -24,9 +21,11 @@ export default function UserManagement() {
       <div className="user-management-header">
         <h2>User Management</h2>
         <Link to="/admin/users/new" className="add-user-btn">+ Add New User</Link>
+        <Link to="/admin/school-schedule" className="btn-schedule">📅 View Full Schedule</Link>
+
       </div>
 
-      {/* Buttons to switch between user roles */}
+      {/* Role filter buttons */}
       <div className="role-filter-buttons">
         <button onClick={() => setFilteredRole('admin')}>Admins</button>
         <button onClick={() => setFilteredRole('teacher')}>Teachers</button>
@@ -40,18 +39,30 @@ export default function UserManagement() {
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
+              {filteredRole === 'teacher' && <th>Actions</th>}
             </tr>
           </thead>
- <tbody>
+          <tbody>
             {filteredUsers.map(u => (
-              <tr 
-                key={u.id} 
-                className="clickable-row" 
+              <tr
+                key={u.id}
+                className="clickable-row"
                 onClick={() => navigate(`/admin/users/${u.id}`)}
               >
                 <td>{u.name}</td>
                 <td>{u.email}</td>
                 <td className="role-cell">{u.role}</td>
+                {filteredRole === 'teacher' && (
+                  <td>
+                    <Link
+                      to={`/admin/users/${u.id}/schedule`}
+                      className="btn-schedule"
+                      onClick={e => e.stopPropagation()} // prevent row click
+                    >
+                      📆 View Schedule
+                    </Link>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

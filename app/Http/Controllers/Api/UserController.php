@@ -6,6 +6,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Models\Teacher;
+use App\Models\Subject;
+use App\Models\Classroom;
+use App\Models\Schedule;
+
 
 class UserController extends Controller
 {
@@ -56,22 +61,39 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role'     => ['required', Rule::in(['admin','teacher','student'])],
+            'name'            => 'required|string|max:255',
+            'email'           => 'required|email|unique:users,email',
+            'password'        => 'required|string|min:6',
+            'role'            => ['required', Rule::in(['admin','teacher','student'])],
+            // Only for teachers
+            'hourly_rate'     => 'nullable|numeric',
+            'payment_method'  => 'nullable|string|in:cash,bank,check',
+            'subjects'        => 'nullable|array',
+            'subjects.*'      => 'exists:subjects,id',
+            'classrooms'      => 'nullable|array',
+            'classrooms.*'    => 'exists:classrooms,id',
         ]);
-
+    
         $user = User::create([
             'name'     => $data['name'],
             'email'    => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
-
-        // Spatie role assignment
+    
         $user->assignRole($data['role']);
-
-        return response()->json($user, 201);
+    
+        if ($data['role'] === 'teacher') {
+            $teacher = Teacher::create([
+                'user_id'        => $user->id,
+                'hourly_rate'    => $data['hourly_rate'] ?? 0,
+                'payment_method' => $data['payment_method'] ?? 'cash',
+            ]);
+    
+            $teacher->subjects()->sync($data['subjects'] ?? []);
+            $teacher->classrooms()->sync($data['classrooms'] ?? []);
+        }
+    
+        return response()->json($user->load('teacher.subjects', 'teacher.classrooms'), 201);
     }
 
 
@@ -115,6 +137,24 @@ class UserController extends Controller
 
 
 
-
+    public function schedule($id)
+    {
+        $schedule = Schedule::with(['classroom', 'subject'])
+            ->where('teacher_id', $id)
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get()
+            ->map(function ($entry) {
+                return [
+                    'day' => $entry->day_of_week,
+                    'start' => $entry->start_time,
+                    'end' => $entry->end_time,
+                    'classroom' => $entry->classroom->name,
+                    'subject' => $entry->subject->name,
+                ];
+            });
+    
+        return response()->json($schedule);
+    }
 
 }

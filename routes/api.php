@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\StudentDashboardController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\ScheduleController;
 
 
 
@@ -39,6 +40,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::apiResource('teachers', TeacherController::class);
     });
+
+
+
+    Route::get('/schedules', [ScheduleController::class, 'index']);
+    Route::post('/schedules', [ScheduleController::class, 'store']);
+    Route::get('/schedules/classroom/{id}', [ScheduleController::class, 'getByClassroom']);
+    Route::get('/schedules/teacher/{id}', [ScheduleController::class, 'getByTeacher']);
+    Route::delete('/schedules/{id}', [ScheduleController::class, 'destroy']);
+    Route::get('/teachers/{id}/schedule', [UserController::class, 'schedule']);
+
+
 
 });
 
