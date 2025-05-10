@@ -29,4 +29,12 @@ class Teacher extends Model
     {
         return $this->belongsToMany(Classroom::class);
     }
+
+public function classroomSubjects()
+{
+    return $this->belongsToMany(Classroom::class, 'classroom_subject_teacher')
+                ->withPivot('subject_id')
+                ->withTimestamps();
+}
+
 }

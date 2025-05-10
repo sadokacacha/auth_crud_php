@@ -11,8 +11,16 @@ class Subject extends Model
 
     protected $fillable = ['name'];
 
-    public function teachers()
-    {
-        return $this->belongsToMany(Teacher::class);
-    }
+  public function teachers()
+{
+    return $this->belongsToMany(Teacher::class, 'classroom_subject_teacher')
+                ->withPivot('classroom_id')
+                ->withTimestamps();
+}
+
+
+
+
+
+    
 }

@@ -5,6 +5,11 @@ use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\StudentDashboardController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\ClassroomController;
+use App\Http\Controllers\Api\SubjectController;
+
+
+
 
 
 
@@ -35,13 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/{id}',   [UserController::class,'show']);    // ← new
         Route::put('/users/{id}',   [UserController::class,'update']);
         Route::delete('/users/{id}',[UserController::class,'destroy']);
-    });
-    
-    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::apiResource('teachers', TeacherController::class);
-    });
-
-
 
     Route::get('/schedules', [ScheduleController::class, 'index']);
     Route::post('/schedules', [ScheduleController::class, 'store']);
@@ -49,6 +48,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/schedules/teacher/{id}', [ScheduleController::class, 'getByTeacher']);
     Route::delete('/schedules/{id}', [ScheduleController::class, 'destroy']);
     Route::get('/teachers/{id}/schedule', [UserController::class, 'schedule']);
+        Route::apiResource('teachers', TeacherController::class);
+    Route::apiResource('classrooms', ClassroomController::class);
+    Route::apiResource('subjects', SubjectController::class);
+
+
+
+    });
+    
+ 
+
+
 
 
 

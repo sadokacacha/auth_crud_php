@@ -12,9 +12,9 @@ export default function SchoolSchedule() {
     axiosClient.get('/classrooms').then(({ data }) => setClassrooms(data));
   }, []);
 
-  const filteredSchedule = selectedClassroom
-    ? schedule.filter(s => s.classroom_id === selectedClassroom)
-    : schedule;
+ const filteredSchedule = selectedClassroom
+  ? schedule.filter(s => s.classroom_id === Number(selectedClassroom))
+  : schedule;
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const hours = Array.from({ length: 13 }, (_, i) => `${8 + i}:00`);

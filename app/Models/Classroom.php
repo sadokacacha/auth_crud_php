@@ -11,13 +11,21 @@ class Classroom extends Model
 
     protected $fillable = ['name'];
 
-    public function teachers()
-    {
-        return $this->belongsToMany(Teacher::class);
-    }
+
+public function teachers()
+{
+    return $this->belongsToMany(Teacher::class, 'classroom_subject_teacher')
+                ->withPivot('subject_id')
+                ->withTimestamps();
+}
 
     public function students()
     {
         return $this->belongsToMany(User::class, 'classroom_user');
     }
+
+
+
+
+
 }
