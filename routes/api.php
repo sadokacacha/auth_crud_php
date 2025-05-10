@@ -1,66 +1,62 @@
 <?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\ClassroomController;
+use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\StudentPaymentController;
+use App\Http\Controllers\Api\TeacherPaymentController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\StudentDashboardController;
-use App\Http\Controllers\Api\TeacherController;
-use App\Http\Controllers\Api\ScheduleController;
-use App\Http\Controllers\Api\ClassroomController;
-use App\Http\Controllers\Api\SubjectController;
 
+// Public route
+Route::post('/login', [AuthController::class, 'login']);
 
-
-
-
-
-use App\Http\Controllers\Api\UserController;
-
-
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
-Route::post('/login', [AuthController::class, 'Login']);
-
+// Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'Logout']);
 
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', fn(Request $request) => $request->user());
 
-    Route::middleware('role:admin')->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
-    Route::middleware('role:teacher')->get('/teacher/dashboard', [TeacherDashboardController::class, 'index']);
-    Route::middleware('role:student')->get('/student/dashboard', [StudentDashboardController::class, 'index']);
+    // Dashboards (role-specific)
+    Route::get('/admin/dashboard',   [AdminDashboardController::class, 'index'])->middleware('role:admin');
+    Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'index'])->middleware('role:teacher');
+    Route::get('/student/dashboard', [StudentDashboardController::class, 'index'])->middleware('role:student');
 
-
-    Route::middleware(['auth:sanctum','role:admin'])->group(function () {
-        Route::get('/users',        [UserController::class,'index']);
-        Route::post('/users',       [UserController::class,'store']);
-        Route::get('/users/{id}',   [UserController::class,'show']);    // ← new
-        Route::put('/users/{id}',   [UserController::class,'update']);
-        Route::delete('/users/{id}',[UserController::class,'destroy']);
+    // Admin-only routes
+    Route::middleware('role:admin')->group(function () {
+        // Resource management
+        Route::apiResource('users', UserController::class);
         Route::apiResource('teachers', TeacherController::class);
+        Route::apiResource('classrooms', ClassroomController::class);
+        Route::apiResource('subjects', SubjectController::class);
+        Route::apiResource('schedules', ScheduleController::class)->except(['show']);
 
-    Route::get('/schedules', [ScheduleController::class, 'index']);
-    Route::post('/schedules', [ScheduleController::class, 'store']);
-    Route::get('/schedules/classroom/{id}', [ScheduleController::class, 'getByClassroom']);
-    Route::get('/schedules/teacher/{id}', [ScheduleController::class, 'getByTeacher']);
-    Route::delete('/schedules/{id}', [ScheduleController::class, 'destroy']);
-    Route::get('/teachers/{id}/schedule', [UserController::class, 'schedule']);
-        Route::apiResource('teachers', TeacherController::class);
-    Route::apiResource('classrooms', ClassroomController::class);
-    Route::apiResource('subjects', SubjectController::class);
+        // Schedule and attendance
+        Route::get('emploi/today', [ScheduleController::class, 'today']);
+        Route::get('attendance/today', [AttendanceController::class, 'today']);
+        Route::post('attendance', [AttendanceController::class, 'store']);
+        Route::put('attendance/{att}', [AttendanceController::class, 'update']);
+        Route::get('attendance/history/{id}', [AttendanceController::class, 'history']);
 
+        // Payments
+        Route::apiResource('payments', PaymentController::class)->only(['store', 'update', 'destroy']);
+        Route::get('payments/user/{id}', [PaymentController::class, 'byUser']);
 
+        // Student payments
+        Route::post('student-payments', [StudentPaymentController::class, 'store']);
+        Route::get('students/{id}/payments', [StudentPaymentController::class, 'byStudent']);
 
+        // Teacher payment summaries
+        Route::get('teachers/{id}/payments/summary', [TeacherPaymentController::class, 'summary']);
+        Route::get('teachers/{id}/payments/history', [TeacherPaymentController::class, 'history']);
     });
-    
- 
-
-
-
-
-
 });
-

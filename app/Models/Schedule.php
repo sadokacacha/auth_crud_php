@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
 {
-    protected $fillable = ['teacher_id', 'classroom_id', 'day', 'start_time', 'end_time'];
+    protected $fillable = ['teacher_id', 'classroom_id' , 'subject_id' , 'day', 'start_time', 'end_time'];
 
 public function teacher() {
     return $this->belongsTo(Teacher::class);
@@ -21,6 +21,9 @@ public function subject() {
     return $this->belongsTo(Subject::class);
 }
 
-
+public function attendances()
+{
+    return $this->hasMany(Attendance::class);
+}
 
 }

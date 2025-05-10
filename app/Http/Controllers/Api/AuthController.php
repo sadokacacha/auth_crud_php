@@ -3,36 +3,39 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function Login(LoginRequest $request)
+    public function login(Request $request)
     {
-        $credentials = $request->validated();
+        // simple validation inline—no separate LoginRequest needed
+        $data = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
 
-        if (!Auth::attempt($credentials)) {
+        if (! Auth::attempt($data)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        $user = Auth::user();
-        $token = $user->createToken('main')->plainTextToken;
+        $user  = Auth::user();
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => [
+            'user'  => [
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
-                // Spatie method to get role names:
                 'role'  => $user->getRoleNames()->first(),
             ],
             'token' => $token,
         ], 200);
     }
 
-    public function Logout(Request $request)
+    public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
         return response()->json(null, 204);

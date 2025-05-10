@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Schedule;
+use Carbon\Carbon;
 
 class ScheduleController extends Controller
 {
@@ -51,4 +52,36 @@ class ScheduleController extends Controller
         $schedule->delete();
         return response()->json(null, 204);
     }
+
+
+
+public function today()
+{
+    $today = Carbon::now()->format('Y-m-d');
+    $dayName = strtolower(Carbon::now()->format('l')); // e.g. monday
+
+    $schedules = Schedule::with(['teacher', 'subject', 'classroom'])
+        ->where('day', $dayName)
+        ->get();
+
+    return response()->json($schedules);
+}
+
+
+
+public function update(Request $request, $id)
+{
+    $schedule = Schedule::findOrFail($id);
+    $data = $request->validate([
+        'start_time' => 'nullable|date_format:H:i',
+        'end_time' => 'nullable|date_format:H:i',
+        'day' => 'nullable|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday'
+    ]);
+    $schedule->update($data);
+    return response()->json($schedule);
+}
+
+
+
+
 }

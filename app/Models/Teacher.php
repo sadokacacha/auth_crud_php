@@ -21,20 +21,27 @@ class Teacher extends Model
     }
 
     public function subjects()
-    {
-        return $this->belongsToMany(Subject::class);
-    }
-
-    public function classrooms()
-    {
-        return $this->belongsToMany(Classroom::class);
-    }
-
-public function classroomSubjects()
 {
-    return $this->belongsToMany(Classroom::class, 'classroom_subject_teacher')
-                ->withPivot('subject_id')
-                ->withTimestamps();
+    return $this->belongsToMany(
+        Subject::class,
+        'subject_teacher',
+        'teacher_id',
+        'subject_id'
+    );
 }
 
+public function classrooms()
+{
+    return $this->belongsToMany(
+        Classroom::class,
+        'classroom_teacher',
+        'teacher_id',
+        'classroom_id'
+    );
+}
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
 }
