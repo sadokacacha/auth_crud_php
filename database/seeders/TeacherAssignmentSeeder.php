@@ -6,26 +6,38 @@ use Illuminate\Database\Seeder;
 use App\Models\Teacher;
 use App\Models\Subject;
 use App\Models\Classroom;
+use Illuminate\Support\Facades\DB;
 
 class TeacherAssignmentSeeder extends Seeder
 {
     public function run(): void
     {
-        // Grab the first teacher record (or adjust to find a specific one)
         $teacher = Teacher::first();
         if (! $teacher) {
             $this->command->warn('No Teacher found—skipping TeacherAssignmentSeeder');
             return;
         }
 
-        // 1) Sync 3 random subjects via subject_teacher pivot:
         $subjectIds = Subject::inRandomOrder()->take(3)->pluck('id')->toArray();
-        $teacher->subjects()->sync($subjectIds);
-
-        // 2) Sync 2 random classrooms via classroom_teacher pivot:
         $classroomIds = Classroom::inRandomOrder()->take(2)->pluck('id')->toArray();
+
+        // Sync the simpler pivot tables if needed
+        $teacher->subjects()->sync($subjectIds);
         $teacher->classrooms()->sync($classroomIds);
 
-        $this->command->info("Assigned subjects and classrooms to Teacher #{$teacher->id}");
+        // Now insert into the triple pivot: classroom_subject_teacher
+        foreach ($classroomIds as $classroomId) {
+            foreach ($subjectIds as $subjectId) {
+                DB::table('classroom_subject_teacher')->insert([
+                    'teacher_id' => $teacher->id,
+                    'classroom_id' => $classroomId,
+                    'subject_id' => $subjectId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $this->command->info("Assigned subjects and classrooms (with combined pivot) to Teacher #{$teacher->id}");
     }
 }

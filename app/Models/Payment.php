@@ -22,4 +22,8 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function teacher()
+{
+    return $this->hasOne(Teacher::class, 'user_id', 'user_id');
+}
 }

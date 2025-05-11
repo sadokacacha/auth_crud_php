@@ -12,7 +12,7 @@ class ScheduleController extends Controller
     // GET /api/schedules
     public function index()
     {
-        $schedules = Schedule::with('teacher.user', 'classroom')->get();
+        $schedules = Schedule::with('teacher.user', 'classroom', 'subject')->get();
         return response()->json($schedules);
     }
 
@@ -22,26 +22,31 @@ class ScheduleController extends Controller
         $data = $request->validate([
             'teacher_id'   => 'required|exists:teachers,id',
             'classroom_id' => 'required|exists:classrooms,id',
+            'subject_id'   => 'required|exists:subjects,id', // make sure this is required
             'day'          => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
             'start_time'   => 'required|date_format:H:i',
             'end_time'     => 'required|date_format:H:i|after:start_time',
         ]);
 
         $schedule = Schedule::create($data);
-        return response()->json($schedule->load('teacher.user', 'classroom'), 201);
+        return response()->json($schedule->load('teacher.user', 'classroom', 'subject'), 201); // ✅ include subject
     }
 
     // GET /api/schedules/classroom/{id}
     public function getByClassroom($id)
     {
-        $schedules = Schedule::where('classroom_id', $id)->with('teacher.user')->get();
+        $schedules = Schedule::where('classroom_id', $id)
+            ->with('teacher.user', 'subject') // ✅ added subject
+            ->get();
         return response()->json($schedules);
     }
 
     // GET /api/schedules/teacher/{id}
     public function getByTeacher($id)
     {
-        $schedules = Schedule::where('teacher_id', $id)->with('classroom')->get();
+        $schedules = Schedule::where('teacher_id', $id)
+            ->with('classroom', 'subject') // ✅ added subject
+            ->get();
         return response()->json($schedules);
     }
 
@@ -53,35 +58,28 @@ class ScheduleController extends Controller
         return response()->json(null, 204);
     }
 
+    // GET /api/schedules/today
+    public function today()
+    {
+        $dayName = strtolower(Carbon::now()->format('l')); // e.g. monday
 
+        $schedules = Schedule::with(['teacher', 'subject', 'classroom'])
+            ->where('day', $dayName)
+            ->get();
 
-public function today()
-{
-    $today = Carbon::now()->format('Y-m-d');
-    $dayName = strtolower(Carbon::now()->format('l')); // e.g. monday
+        return response()->json($schedules);
+    }
 
-    $schedules = Schedule::with(['teacher', 'subject', 'classroom'])
-        ->where('day', $dayName)
-        ->get();
-
-    return response()->json($schedules);
-}
-
-
-
-public function update(Request $request, $id)
-{
-    $schedule = Schedule::findOrFail($id);
-    $data = $request->validate([
-        'start_time' => 'nullable|date_format:H:i',
-        'end_time' => 'nullable|date_format:H:i',
-        'day' => 'nullable|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday'
-    ]);
-    $schedule->update($data);
-    return response()->json($schedule);
-}
-
-
-
-
+    // PUT /api/schedules/{id}
+    public function update(Request $request, $id)
+    {
+        $schedule = Schedule::findOrFail($id);
+        $data = $request->validate([
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time'   => 'nullable|date_format:H:i|after:start_time',
+            'day'        => 'nullable|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+        ]);
+        $schedule->update($data);
+        return response()->json($schedule->load('teacher.user', 'classroom', 'subject')); // ✅ include subject
+    }
 }
