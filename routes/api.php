@@ -48,12 +48,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/schedules/recurring', [ScheduleController::class, 'deleteRecurring']);
     Route::get('/schedules/upcoming', [ScheduleController::class, 'upcomingWeek']);
 
+
     // Schedule and attendance
     Route::get('/emploi/today', [ScheduleController::class, 'today']);
     Route::get('/attendance/today', [AttendanceController::class, 'today']);
     Route::post('/attendance', [AttendanceController::class, 'store']);
     Route::put('/attendance/{att}', [AttendanceController::class, 'update']);
     Route::get('/attendance/history/{id}', [AttendanceController::class, 'history']);
+    Route::get('/teacher-attendance', [AttendanceController::class, 'index']);
+
 
     // Payments
     Route::apiResource('payments', PaymentController::class)->only(['store', 'update', 'destroy']);

@@ -40,6 +40,7 @@ const [newEntry, setNewEntry] = useState({
       (!filter.classroomId || s.classroom_id === +filter.classroomId) &&
       (!filter.teacherId || s.teacher_id === +filter.teacherId) &&
       (!filter.subject_id || s.subject_id === +filter.subjectId)
+      
     );
   });
 

@@ -1,104 +1,33 @@
-.user-management-container {
-    background-color: #f9f9f9;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 2rem auto;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-  }
-  
-  .user-management-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .user-management-header h2 {
-    font-size: 1.8rem;
-    color: #333;
-  }
-  
-  .add-user-btn {
-    padding: 0.5rem 1rem;
-    background-color: #d6a35c;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    border-radius: 8px;
-    transition: background-color 0.3s;
-  }
-  
-  .add-user-btn:hover {
-    background-color: #b88a4a;
-  }
-  
-  .table-container {
-    overflow-x: auto;
-  }
-  
-  .user-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  .user-table thead {
-    background-color: #f1f5f9;
-  }
-  
-  .user-table th,
-  .user-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .user-table th {
-    font-size: 1rem;
-    color: #555;
-  }
-  
-  .user-table td {
-    color: #666;
-  }
-  
-  .role-cell {
-    text-transform: capitalize;
-    font-weight: 500;
-  }
-  
-  .user-table tr:last-child td {
-    border-bottom: none;
-  }
-  
-  .role-filter-buttons {
-    margin-bottom: 20px;
-  }
-  
-  .role-filter-buttons button {
-    margin-right: 10px;
-    padding: 8px 16px;
-    border: none;
-    background-color: #1f008d;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-  }
-  
-  .role-filter-buttons button:hover {
-    background-color: #e0ae07;
-  }
-  
+.btn-payment {
+  padding: 0.4rem 0.8rem;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
 
+.btn-payment:hover {
+  background-color: #388e3c;
+}
 
-  .clickable-row {
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .clickable-row:hover {
-    background-color: #f0f0f0;
-  }
+.payment-box {
+  background: #f0f4f8;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.payment-form {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.payment-form input {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  flex: 1;
+}

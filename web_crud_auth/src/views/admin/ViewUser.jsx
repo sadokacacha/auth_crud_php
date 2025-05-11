@@ -123,6 +123,19 @@ export default function ViewUser() {
               <h3>{user.name}</h3>
               <p>{user.email}</p>
 
+
+    {user && user.role === 'teacher' && (
+  <div className="teacher-stats">
+    <h3>📊 Teaching Stats</h3>
+    <p><strong>Total Hours Taught:</strong> {user.total_hours}</p>
+    <p><strong>Total Payments Accumulated:</strong> ${user.total_payments}</p>
+  </div>
+)}
+
+
+
+
+
               {user.role === 'student' && (
                 <>
                   <div style={{ width: 100, height: 100, margin: '1rem auto' }}>

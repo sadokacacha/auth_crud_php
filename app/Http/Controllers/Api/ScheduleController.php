@@ -10,12 +10,17 @@ use Carbon\Carbon;
 class ScheduleController extends Controller
 {
     // GET /api/schedules
-    public function index()
-    {
-        $schedules = Schedule::with('teacher.user', 'classroom', 'subject')->get();
-        return response()->json($schedules);
-    }
-
+   public function index()
+{
+    $today = now()->toDateString();
+    $schedules = Schedule::with([
+        'teacher.user','classroom','subject',
+        'attendances' => function($q) use($today) {
+            $q->where('date',$today);
+        }
+    ])->get();
+    return response()->json($schedules);
+}
     // POST /api/schedules (single)
     public function store(Request $request)
     {
@@ -163,14 +168,21 @@ class ScheduleController extends Controller
     }
 
     // GET /api/schedules/today
-    public function today()
-    {
-        $dayName = strtolower(Carbon::now()->format('l'));
+public function today()
+{
+    $today = Carbon::now()->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
+    $todayDate = Carbon::now()->toDateString(); // optional
 
-        $schedules = Schedule::with(['teacher', 'subject', 'classroom'])
-            ->where('day', $dayName)
-            ->get();
+    $schedules = Schedule::where('day', $today)
+        ->whereDate('start_time', '<=', now())
+        ->whereDate('end_time', '>=', now())
+        ->with(['teacher.user', 'classroom', 'subject'])
+        ->get();
 
-        return response()->json($schedules);
-    }
+    return response()->json([
+        'date' => $todayDate,
+        'weekday' => Carbon::now()->englishDayOfWeek,
+        'schedules' => $schedules
+    ]);
+}
 }

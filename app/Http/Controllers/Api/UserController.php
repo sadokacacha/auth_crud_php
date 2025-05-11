@@ -10,7 +10,8 @@ use App\Models\Teacher;
 use App\Models\Subject;
 use App\Models\Classroom;
 use App\Models\Schedule;
-
+use App\Models\Attendance;
+use App\Models\Payment;
 
 class UserController extends Controller
 {
@@ -36,17 +37,22 @@ class UserController extends Controller
 
 
     // GET /api/users/{id}
-    public function show($id)
-    {
-        $user = User::with('roles')->findOrFail($id);
+public function show($id)
+{
+    $user = User::with('teacher')->findOrFail($id);
 
-        return response()->json([
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'role'  => $user->roles->pluck('name')->first(),
+    if ($user->role === 'teacher') {
+        $totalHours = Attendance::whereHas('schedule', function ($q) use ($user) {
+            $q->where('teacher_id', $user->teacher->id);
+        })->where('status', 'present')->sum('hours');
 
-        ]);
+        $totalPayments = Payment::where('user_id', $user->id)->sum('amount');
+
+        $user->total_hours = $totalHours;
+        $user->total_payments = $totalPayments;
+    }
+
+    return response()->json($user);
     
 }
 

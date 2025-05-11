@@ -64,35 +64,41 @@ public function mark(Request $request)
 {
     $data = $request->validate([
         'schedule_id' => 'required|exists:schedules,id',
-        'teacher_id' => 'required|exists:users,id',
-        'status' => 'required|in:present,absent',
-        'date' => 'required|date',
-        'hours' => 'required|numeric|min:1'
+        'teacher_id'  => 'required|exists:teachers,id',
+        'date'        => 'required|date',
+        'status'      => 'required|in:present,absent',
+        'hours'       => 'required_if:status,present|numeric|min:1',
     ]);
 
+    // reject if already present today
+    $existing = Attendance::where([
+        ['schedule_id',$data['schedule_id']],
+        ['teacher_id', $data['teacher_id']],
+        ['date',       $data['date']],
+    ])->first();
+
+    if ($existing && $existing->status==='present' && $data['status']==='present') {
+        return response()->json(['message'=>'Already marked present today'], 422);
+    }
+
     $attendance = Attendance::updateOrCreate(
-        [
-            'schedule_id' => $data['schedule_id'],
-            'teacher_id' => $data['teacher_id'],
-            'date' => $data['date'],
-        ],
-        [
-            'status' => $data['status'],
-            'hours' => $data['hours']
-        ]
+        ['schedule_id'=>$data['schedule_id'],'teacher_id'=>$data['teacher_id'],'date'=>$data['date']],
+        ['status'=>$data['status'],'hours'=>$data['hours'] ?? 0]
     );
 
     return response()->json($attendance);
 }
 
-public function history($teacher_id)
+public function index(Request $request)
 {
-    $records = Attendance::with('schedule.subject', 'schedule.classroom')
-        ->where('teacher_id', $teacher_id)
-        ->orderBy('date', 'desc')
-        ->get();
+    $from = $request->input('from');
+    $to = $request->input('to');
 
-    return response()->json($records);
+    $teachers = User::where('role', 'teacher')->with(['schedules' => function ($q) use ($from, $to) {
+        $q->whereBetween('start_time', [$from, $to])
+          ->with('attendance', 'subject', 'classroom');
+    }])->get();
+
+    return response()->json($teachers);
 }
-
 }
