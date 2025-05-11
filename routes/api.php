@@ -47,6 +47,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/schedules/recurring', [ScheduleController::class, 'updateRecurring']);
     Route::delete('/schedules/recurring', [ScheduleController::class, 'deleteRecurring']);
     Route::get('/schedules/upcoming', [ScheduleController::class, 'upcomingWeek']);
+    Route::get('/emploi/today',     [ScheduleController::class, 'today']);
+Route::get('/emploi/week',      [ScheduleController::class, 'week']);
+Route::get('/emploi/next-week', [ScheduleController::class, 'nextWeek']);
+
 
 
     // Schedule and attendance

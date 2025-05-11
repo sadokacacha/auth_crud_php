@@ -11,6 +11,17 @@ use App\Models\Schedule;
 
 class AttendanceController extends Controller
 {
+
+
+
+
+
+
+
+
+
+
+    
     public function today()
     {
         $today = now()->toDateString();

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../../axios-client';
+import Attendance from './Attendance';
 import './UserManagement.css';
 
 export default function UserManagement() {
@@ -9,6 +10,8 @@ export default function UserManagement() {
   const [activePaymentUserId, setActivePaymentUserId] = useState(null);
   const [payments, setPayments] = useState({});
   const [newAmount, setNewAmount] = useState('');
+  const [scheduleTab, setScheduleTab] = useState('today');
+  const [teachingSchedule, setTeachingSchedule] = useState([]);
 
   const navigate = useNavigate();
 
@@ -18,25 +21,40 @@ export default function UserManagement() {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    if (filteredRole === 'teacher') {
+      fetchSchedule(scheduleTab);
+    }
+  }, [filteredRole, scheduleTab]);
+
+  const fetchSchedule = (period) => {
+    axiosClient.get(`/teachers/schedule?period=${period}`)
+      .then(({ data }) => setTeachingSchedule(data))
+      .catch(console.error);
+  };
+
   const fetchPayments = (userId) => {
-    axiosClient.get(`/students/${userId}/payments`).then(({ data }) => {
-      setPayments(prev => ({ ...prev, [userId]: data }));
-    });
+    axiosClient.get(`/students/${userId}/payments`)
+      .then(({ data }) => {
+        setPayments(prev => ({ ...prev, [userId]: data }));
+      })
+      .catch(console.error);
   };
 
-  const handlePaymentClick = (userId) => {
-    const alreadyOpen = activePaymentUserId === userId;
-    setActivePaymentUserId(alreadyOpen ? null : userId);
-    if (!alreadyOpen) fetchPayments(userId);
+  const togglePaymentBox = (userId) => {
+    const isSame = activePaymentUserId === userId;
+    setActivePaymentUserId(isSame ? null : userId);
+    if (!isSame) fetchPayments(userId);
   };
 
-  const addPayment = (userId) => {
+  const handleAddPayment = (userId) => {
     if (!newAmount) return;
     axiosClient.post(`/students/${userId}/payments`, { amount: newAmount })
       .then(() => {
         fetchPayments(userId);
         setNewAmount('');
-      });
+      })
+      .catch(console.error);
   };
 
   const filteredUsers = users.filter(u => u.role === filteredRole);
@@ -53,9 +71,15 @@ export default function UserManagement() {
       </div>
 
       <div className="role-filter-buttons">
-        <button onClick={() => setFilteredRole('admin')}>Admins</button>
-        <button onClick={() => setFilteredRole('teacher')}>Teachers</button>
-        <button onClick={() => setFilteredRole('student')}>Students</button>
+        {['admin','teacher','student'].map(role => (
+          <button
+            key={role}
+            className={filteredRole === role ? 'active' : ''}
+            onClick={() => setFilteredRole(role)}
+          >
+            {role.charAt(0).toUpperCase() + role.slice(1)}s
+          </button>
+        ))}
       </div>
 
       <div className="table-container">
@@ -67,17 +91,22 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map(u => (
-              <>
-                <tr key={u.id}
-                    className="clickable-row"
-                    onClick={() => navigate(`/admin/users/${u.id}`)}>
-                  <td>{u.name}</td>
-                  <td>{u.email}</td>
-                  <td className="role-cell">{u.role}</td>
+            {filteredUsers.map(user => (
+              <Fragment key={user.id}>
+                <tr
+                  className="clickable-row"
+                  onClick={() => navigate(`/admin/users/${user.id}`)}
+                >
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td className="role-cell">{user.role}</td>
                   {filteredRole === 'teacher' && (
                     <td>
-                      <Link to={`/admin/users/${u.id}/schedule`} className="btn-schedule" onClick={e => e.stopPropagation()}>
+                      <Link
+                        to={`/admin/users/${user.id}/schedule`}
+                        className="btn-schedule"
+                        onClick={e => e.stopPropagation()}
+                      >
                         📆 View Schedule
                       </Link>
                     </td>
@@ -86,9 +115,9 @@ export default function UserManagement() {
                     <td>
                       <button
                         className="btn-payment"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
-                          handlePaymentClick(u.id);
+                          togglePaymentBox(user.id);
                         }}
                       >
                         💳 Manage Payment
@@ -97,35 +126,77 @@ export default function UserManagement() {
                   )}
                 </tr>
 
-                {/* Inline Payment Management */}
-                {filteredRole === 'student' && activePaymentUserId === u.id && (
-                  <tr className="payment-row">
+                {filteredRole === 'student' && activePaymentUserId === user.id && (
+                  <tr className="payment-row" key={`payment-${user.id}`}>
                     <td colSpan="4">
                       <div className="payment-box">
-                        <h4>Payments for {u.name}</h4>
+                        <h4>Payments for {user.name}</h4>
                         <ul>
-                          {(payments[u.id] || []).map(p => (
-                            <li key={p.id}>💰 ${p.amount} — {new Date(p.date).toLocaleDateString()}</li>
+                          {(payments[user.id] || []).map(p => (
+                            <li key={p.id}>
+                              💰 ${p.amount} — {new Date(p.date).toLocaleDateString()}
+                            </li>
                           ))}
                         </ul>
                         <div className="payment-form">
                           <input
                             type="number"
-                            value={newAmount}
-                            onChange={(e) => setNewAmount(e.target.value)}
                             placeholder="Enter amount"
+                            value={newAmount}
+                            onChange={e => setNewAmount(e.target.value)}
                           />
-                          <button onClick={() => addPayment(u.id)}>Add Payment</button>
+                          <button onClick={() => handleAddPayment(user.id)}>Add Payment</button>
                         </div>
                       </div>
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
       </div>
+
+      {filteredRole === 'teacher' && (
+        <>
+          <div className="embedded-attendance-section">
+            <h3>📋 Attendance for Today</h3>
+            <Attendance />
+          </div>
+
+          <div className="schedule-tabs">
+            <h3>👩‍🏫 Who Teaches When?</h3>
+            <div className="tabs">
+              {[
+                { key: 'today', label: 'Today' },
+                { key: 'this_week', label: 'This Week' },
+                { key: 'next_week', label: 'Next Week' }
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  className={scheduleTab === tab.key ? 'active' : ''}
+                  onClick={() => setScheduleTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="schedule-list">
+              {teachingSchedule.length === 0
+                ? <p>No classes found for this period.</p>
+                : <ul>
+                    {teachingSchedule.map((entry, idx) => (
+                      <li key={entry.id ?? idx}>
+                        <strong>{entry.teacher_name}</strong> —{' '}
+                        {entry.classroom.name} — {entry.date} at {entry.start_time}
+                      </li>
+                    ))}
+                  </ul>
+              }
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

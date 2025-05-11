@@ -1,61 +1,49 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Payment;
-use App\Models\User;
+use App\Models\Teacher;
+use App\Models\Attendance;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class TeacherPaymentController extends Controller
 {
-    // Payment summary for teacher
-    public function summary($teacherId)
+    public function index()
     {
-        $teacher = User::findOrFail($teacherId);
+        // Get current month
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
 
-        // Replace this with actual unpaid sessions logic from schedule or attendance
-        $unpaidPayments = Payment::where('user_id', $teacherId)
-            ->where('type', 'teacher')
-            ->where('status', 'pending')
-            ->get();
+        // Get all teachers
+        $teachers = Teacher::with(['user', 'schedules', 'schedules.attendances'])->get();
 
-        $total = $unpaidPayments->sum('amount');
+        $teacherPayments = [];
+
+        foreach ($teachers as $teacher) {
+            // Get attendances for this teacher in the current month
+            $totalHours = Attendance::whereHas('schedule', function ($query) use ($teacher) {
+                    $query->where('teacher_id', $teacher->id);
+                })
+                ->whereMonth('date', $currentMonth)
+                ->whereYear('date', $currentYear)
+                ->sum('hours');
+
+            // Calculate payment
+            $hourlyRate = $teacher->hourly_rate ?? 0;
+            $paymentDue = $totalHours * $hourlyRate;
+
+            $teacherPayments[] = [
+                'teacher_name' => $teacher->user->name,
+                'hourly_rate' => $hourlyRate,
+                'total_hours' => $totalHours,
+                'payment_due' => $paymentDue,
+            ];
+        }
 
         return response()->json([
-            'teacher' => $teacher->only(['id', 'name', 'email']),
-            'unpaid_payments' => $unpaidPayments,
-            'total_due' => $total,
-        ]);
-    }
-
-    // Mark teacher payments as paid
-    public function markAsPaid(Request $request)
-    {
-        $data = $request->validate([
-            'payment_ids' => 'required|array',
-            'payment_ids.*' => 'exists:payments,id',
-        ]);
-
-        Payment::whereIn('id', $data['payment_ids'])->update(['status' => 'paid']);
-
-        return response()->json([
-            'message' => 'Payments marked as paid.',
-        ]);
-    }
-
-    // History of all teacher payments
-    public function history($teacherId)
-    {
-        $teacher = User::findOrFail($teacherId);
-
-        $payments = Payment::where('user_id', $teacherId)
-            ->where('type', 'teacher')
-            ->get();
-
-        return response()->json([
-            'teacher' => $teacher->only(['id', 'name', 'email']),
-            'payments' => $payments,
+            'month' => Carbon::now()->format('F Y'),
+            'teacher_payments' => $teacherPayments,
         ]);
     }
 }

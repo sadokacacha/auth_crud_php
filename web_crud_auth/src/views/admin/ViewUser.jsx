@@ -124,14 +124,22 @@ export default function ViewUser() {
               <p>{user.email}</p>
 
 
-    {user && user.role === 'teacher' && (
+{user.role === 'teacher' && (
   <div className="teacher-stats">
     <h3>📊 Teaching Stats</h3>
     <p><strong>Total Hours Taught:</strong> {user.total_hours}</p>
-    <p><strong>Total Payments Accumulated:</strong> ${user.total_payments}</p>
+    <p><strong>Payment Method:</strong> {user.payment_method}</p>
+    <p><strong>Total Payments:</strong> ${user.total_payments}</p>
+    <h4>Hours by Subject:</h4>
+    <ul>
+      {user.hours_per_subject.map(s => (
+        <li key={s.subject_id}>
+          {s.subject_name}: {s.hours} hrs
+        </li>
+      ))}
+    </ul>
   </div>
 )}
-
 
 
 

@@ -15,5 +15,16 @@ protected $fillable = ['schedule_id', 'teacher_id', 'date', 'hours', 'status'];
 {
     return $this->hasOneThrough(Teacher::class, Schedule::class, 'id', 'id', 'schedule_id', 'teacher_id');
 }
+public function subject()
+{
+    // via schedule → subject
+    return $this->hasOneThrough(
+      Subject::class,
+      Schedule::class,
+      'id',           // schedules.id
+      'id',           // subjects.id
+      'schedule_id',  // attendances.schedule_id
+      'subject_id'    // schedules.subject_id
+    );
 }
-// Compare this snippet from app/Models/Schedule.php:
+}

@@ -222,4 +222,23 @@ class ScheduleController extends Controller
             'schedules' => $schedules
         ]);
     }
+    public function week()
+{
+    $start = Carbon::today()->startOfWeek();
+    $end   = Carbon::today()->endOfWeek();
+    $schedules = Schedule::whereBetween('created_at', [$start, $end])
+        ->with(['teacher.user','classroom','subject','attendances'])
+        ->get();
+    return response()->json($schedules);
+}
+
+public function nextWeek()
+{
+    $start = Carbon::today()->addWeek()->startOfWeek();
+    $end   = Carbon::today()->addWeek()->endOfWeek();
+    $schedules = Schedule::whereBetween('created_at', [$start, $end])
+        ->with(['teacher.user','classroom','subject','attendances'])
+        ->get();
+    return response()->json($schedules);
+}
 }
