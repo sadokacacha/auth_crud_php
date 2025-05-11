@@ -12,16 +12,18 @@ export default function SchoolSchedule() {
     classroomId: "",
     teacherId: "",
     subjectId: "",
+    
   });
 
-  const [newEntry, setNewEntry] = useState({
-    classroom_id: "",
-    teacher_id: "",
-    subject_id: "",
-    day: "Monday",
-    start_time: "08:00",
-    end_time: "09:00",
-  });
+const [newEntry, setNewEntry] = useState({
+  classroom_id: "",
+  teacher_id: "",
+  subject_id: "",
+  day: "Monday",
+  start_time: "08:00",
+  end_time: "09:00",
+  date: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
+});
 
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const hours = Array.from({ length: 13 }, (_, i) => `${String(8 + i).padStart(2, "0")}:00`);
@@ -87,12 +89,14 @@ const handleAdd = (e) => {
           ))}
         </select>
 
-        <select onChange={e => setFilter(f => ({ ...f, subjectId: e.target.value }))}>
-          <option value="">All Subjects</option>
-          {subjects.map(s => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
+      <select
+  onChange={e => setFilter(f => ({ ...f, subject_id: e.target.value }))}
+>
+  <option value="">All Subjects</option>
+  {subjects.map(s => (
+    <option key={s.id} value={s.id}>{s.name}</option>
+  ))}
+</select>
       </div>
 
       {/* Add Schedule */}

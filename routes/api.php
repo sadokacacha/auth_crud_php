@@ -35,28 +35,36 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
         // Resource management
         Route::apiResource('users', UserController::class);
-        Route::apiResource('teachers', TeacherController::class);
-        Route::apiResource('classrooms', ClassroomController::class);
-        Route::apiResource('subjects', SubjectController::class);
-        Route::apiResource('schedules', ScheduleController::class)->except(['show']);
+    Route::apiResource('teachers', TeacherController::class);
+    Route::apiResource('classrooms', ClassroomController::class);
+    Route::apiResource('subjects', SubjectController::class);
+    Route::apiResource('schedules', ScheduleController::class)->except(['show']);
 
-        // Schedule and attendance
-        Route::get('emploi/today', [ScheduleController::class, 'today']);
-        Route::get('attendance/today', [AttendanceController::class, 'today']);
-        Route::post('attendance', [AttendanceController::class, 'store']);
-        Route::put('attendance/{att}', [AttendanceController::class, 'update']);
-        Route::get('attendance/history/{id}', [AttendanceController::class, 'history']);
+    // Additional schedule routes
+    Route::put('/schedules/{id}', [ScheduleController::class, 'update']);
+    Route::delete('/schedules/{id}', [ScheduleController::class, 'destroy']);
+    Route::post('/schedules/recurring', [ScheduleController::class, 'storeRecurring']);
+    Route::put('/schedules/recurring', [ScheduleController::class, 'updateRecurring']);
+    Route::delete('/schedules/recurring', [ScheduleController::class, 'deleteRecurring']);
+    Route::get('/schedules/upcoming', [ScheduleController::class, 'upcomingWeek']);
 
-        // Payments
-        Route::apiResource('payments', PaymentController::class)->only(['store', 'update', 'destroy']);
-        Route::get('payments/user/{id}', [PaymentController::class, 'byUser']);
+    // Schedule and attendance
+    Route::get('/emploi/today', [ScheduleController::class, 'today']);
+    Route::get('/attendance/today', [AttendanceController::class, 'today']);
+    Route::post('/attendance', [AttendanceController::class, 'store']);
+    Route::put('/attendance/{att}', [AttendanceController::class, 'update']);
+    Route::get('/attendance/history/{id}', [AttendanceController::class, 'history']);
 
-        // Student payments
-        Route::post('student-payments', [StudentPaymentController::class, 'store']);
-        Route::get('students/{id}/payments', [StudentPaymentController::class, 'byStudent']);
+    // Payments
+    Route::apiResource('payments', PaymentController::class)->only(['store', 'update', 'destroy']);
+    Route::get('/payments/user/{id}', [PaymentController::class, 'byUser']);
 
-        // Teacher payment summaries
-        Route::get('teachers/{id}/payments/summary', [TeacherPaymentController::class, 'summary']);
-        Route::get('teachers/{id}/payments/history', [TeacherPaymentController::class, 'history']);
+    // Student payments
+    Route::post('/student-payments', [StudentPaymentController::class, 'store']);
+    Route::get('/students/{id}/payments', [StudentPaymentController::class, 'byStudent']);
+
+    // Teacher payment summaries
+    Route::get('/teachers/{id}/payments/summary', [TeacherPaymentController::class, 'summary']);
+    Route::get('/teachers/{id}/payments/history', [TeacherPaymentController::class, 'history']);
     });
 });
