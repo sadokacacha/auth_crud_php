@@ -6,38 +6,48 @@ use Illuminate\Database\Seeder;
 use App\Models\Teacher;
 use App\Models\Subject;
 use App\Models\Classroom;
-use Illuminate\Support\Facades\DB;
 
 class TeacherAssignmentSeeder extends Seeder
 {
     public function run(): void
     {
+        // 1) Fetch a teacher
         $teacher = Teacher::first();
         if (! $teacher) {
-            $this->command->warn('No Teacher found—skipping TeacherAssignmentSeeder');
+            $this->command->warn('No teacher found—skipping TeacherAssignmentSeeder');
             return;
         }
 
-        $subjectIds = Subject::inRandomOrder()->take(3)->pluck('id')->toArray();
-        $classroomIds = Classroom::inRandomOrder()->take(2)->pluck('id')->toArray();
+        // 2) Pick 3 random subjects
+        $subjectIds = Subject::inRandomOrder()
+                             ->take(3)
+                             ->pluck('id')
+                             ->toArray();
+        $this->command->info('Picked Subject IDs: ' . implode(', ', $subjectIds));
 
-        // Sync the simpler pivot tables if needed
+        // 3) Pick 2 random classrooms
+        $classroomIds = Classroom::inRandomOrder()
+                                 ->take(2)
+                                 ->pluck('id')
+                                 ->toArray();
+        $this->command->info('Picked Classroom IDs: ' . implode(', ', $classroomIds));
+
+        // 4) Sync the simple subject_teacher pivot
         $teacher->subjects()->sync($subjectIds);
-        $teacher->classrooms()->sync($classroomIds);
+        $this->command->info("Synced subjects to teacher #{$teacher->id}");
 
-        // Now insert into the triple pivot: classroom_subject_teacher
+        // 5) Seed the classroom_subject_teacher pivot by using classrooms() relationship
         foreach ($classroomIds as $classroomId) {
             foreach ($subjectIds as $subjectId) {
-                DB::table('classroom_subject_teacher')->insert([
-                    'teacher_id' => $teacher->id,
-                    'classroom_id' => $classroomId,
+                $teacher->classrooms()->attach($classroomId, [
                     'subject_id' => $subjectId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
+                $this->command->info(
+                    "Attached classroom #{$classroomId} + subject #{$subjectId} to teacher #{$teacher->id}"
+                );
             }
         }
 
-        $this->command->info("Assigned subjects and classrooms (with combined pivot) to Teacher #{$teacher->id}");
+        $this->command->info("✅ Finished TeacherAssignmentSeeder");
     }
 }

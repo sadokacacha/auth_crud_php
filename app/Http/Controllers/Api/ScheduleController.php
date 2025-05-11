@@ -9,19 +9,27 @@ use Carbon\Carbon;
 
 class ScheduleController extends Controller
 {
-    // GET /api/schedules
-   public function index()
-{
-    $today = now()->toDateString();
-    $schedules = Schedule::with([
-        'teacher.user','classroom','subject',
-        'attendances' => function($q) use($today) {
-            $q->where('date',$today);
-        }
-    ])->get();
-    return response()->json($schedules);
-}
-    // POST /api/schedules (single)
+    /**
+     * GET /api/schedules
+     * List all schedules with today's attendance
+     */
+    public function index()
+    {
+        $today = now()->toDateString();
+        $schedules = Schedule::with([
+            'teacher.user', 'classroom', 'subject',
+            'attendances' => function ($q) use ($today) {
+                $q->where('date', $today);
+            }
+        ])->get();
+
+        return response()->json($schedules);
+    }
+
+    /**
+     * POST /api/schedules
+     * Store a single schedule
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -37,7 +45,10 @@ class ScheduleController extends Controller
         return response()->json($schedule->load('teacher.user', 'classroom', 'subject'), 201);
     }
 
-    // POST /api/schedules/recurring
+    /**
+     * POST /api/schedules/recurring
+     * Store weekly recurring schedules until a certain date
+     */
     public function storeRecurring(Request $request)
     {
         $data = $request->validate([
@@ -51,11 +62,10 @@ class ScheduleController extends Controller
         ]);
 
         $repeatUntil = Carbon::parse($data['repeat_until']);
-        $start = Carbon::now();
         $day = ucfirst(strtolower($data['day']));
-
         $schedules = [];
-        for ($date = $start->copy(); $date->lte($repeatUntil); $date->addWeek()) {
+
+        for ($date = Carbon::now(); $date->lte($repeatUntil); $date->addWeek()) {
             if ($date->format('l') === $day) {
                 $schedules[] = Schedule::create([
                     'teacher_id'   => $data['teacher_id'],
@@ -72,20 +82,28 @@ class ScheduleController extends Controller
         return response()->json($schedules);
     }
 
-    // PUT /api/schedules/{id}
+    /**
+     * PUT /api/schedules/{id}
+     * Update a single schedule
+     */
     public function update(Request $request, $id)
     {
         $schedule = Schedule::findOrFail($id);
+
         $data = $request->validate([
             'start_time' => 'nullable|date_format:H:i',
             'end_time'   => 'nullable|date_format:H:i|after:start_time',
             'day'        => 'nullable|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
         ]);
+
         $schedule->update($data);
         return response()->json($schedule->load('teacher.user', 'classroom', 'subject'));
     }
 
-    // PUT /api/schedules/recurring
+    /**
+     * PUT /api/schedules/recurring
+     * Update all recurring schedules based on matching attributes
+     */
     public function updateRecurring(Request $request)
     {
         $data = $request->validate([
@@ -109,7 +127,10 @@ class ScheduleController extends Controller
         return response()->json(['updated' => $affected]);
     }
 
-    // DELETE /api/schedules/recurring
+    /**
+     * DELETE /api/schedules/recurring
+     * Delete all recurring schedules
+     */
     public function deleteRecurring(Request $request)
     {
         $data = $request->validate([
@@ -128,7 +149,10 @@ class ScheduleController extends Controller
         return response()->json(['deleted' => $deleted]);
     }
 
-    // GET /api/schedules/upcoming
+    /**
+     * GET /api/schedules/upcoming
+     * Get all schedules within the next 7 days
+     */
     public function upcomingWeek()
     {
         $today = Carbon::today();
@@ -141,48 +165,61 @@ class ScheduleController extends Controller
         return response()->json($schedules);
     }
 
-    // GET /api/schedules/classroom/{id}
+    /**
+     * GET /api/schedules/classroom/{id}
+     * Get schedules for a specific classroom
+     */
     public function getByClassroom($id)
     {
         $schedules = Schedule::where('classroom_id', $id)
             ->with('teacher.user', 'subject')
             ->get();
+
         return response()->json($schedules);
     }
 
-    // GET /api/schedules/teacher/{id}
+    /**
+     * GET /api/schedules/teacher/{id}
+     * Get schedules for a specific teacher
+     */
     public function getByTeacher($id)
     {
         $schedules = Schedule::where('teacher_id', $id)
             ->with('classroom', 'subject')
             ->get();
+
         return response()->json($schedules);
     }
 
-    // DELETE /api/schedules/{id}
+    /**
+     * DELETE /api/schedules/{id}
+     * Delete a single schedule
+     */
     public function destroy($id)
     {
         $schedule = Schedule::findOrFail($id);
         $schedule->delete();
+
         return response()->json(null, 204);
     }
 
-    // GET /api/schedules/today
-public function today()
-{
-    $today = Carbon::now()->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
-    $todayDate = Carbon::now()->toDateString(); // optional
+    /**
+     * GET /api/schedules/today
+     * Get today's active schedules (if current time is between start_time and end_time)
+     */
+    public function today()
+    {
+        $today = Carbon::now()->englishDayOfWeek;
+        $todayDate = Carbon::now()->toDateString();
 
-    $schedules = Schedule::where('day', $today)
-        ->whereDate('start_time', '<=', now())
-        ->whereDate('end_time', '>=', now())
-        ->with(['teacher.user', 'classroom', 'subject'])
-        ->get();
+        $schedules = Schedule::where('day', $today)
+            ->with(['teacher.user', 'classroom', 'subject'])
+            ->get();
 
-    return response()->json([
-        'date' => $todayDate,
-        'weekday' => Carbon::now()->englishDayOfWeek,
-        'schedules' => $schedules
-    ]);
-}
+        return response()->json([
+            'date' => $todayDate,
+            'weekday' => $today,
+            'schedules' => $schedules
+        ]);
+    }
 }
