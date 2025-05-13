@@ -40,53 +40,48 @@ class UserController extends Controller
     // GET /api/users/{id}
 public function show($id)
 {
-    $user = User::with('roles','teacher')->findOrFail($id);
+    $user = User::with('roles')->findOrFail($id);
+    $role = $user->roles->pluck('name')->first();
 
-    // base shape
-    $out = [
+    $base = [
       'id'    => $user->id,
       'name'  => $user->name,
       'email' => $user->email,
-      'role'  => $user->roles->pluck('name')->first(),
+      'role'  => $role,
     ];
 
-    if ($out['role'] === 'teacher') {
-        $teacherId = $user->teacher->id;
+    // teacher
+    if ($role === 'teacher') {
+        $teacher = $user->teacher;
+        $modules = [];
+        $total   = 0;
+        foreach ($teacher->subjects as $sub) {
+            $done    = $sub->pivot->hours_done;
+            $totalH  = $sub->total_hours;
+            $price   = $done * $teacher->hourly_rate;
+            $modules[] = [
+              'name'           => $sub->name,
+              'hours_done'     => $done,
+              'hours_required' => $totalH,
+              'price'          => $price,
+            ];
+            $total += $price;
+        }
+        $payments = Payment::where('user_id', $user->id)
+                           ->orderBy('date','desc')
+                           ->get();
 
-        // 1) total hours taught
-        $totalHours = Attendance::where('teacher_id', $teacherId)
-                        ->where('status','present')
-                        ->sum('hours');
-
-        // 2) total payments (teacher)
-        $totalPayments = Payment::where('user_id', $user->id)
-                          ->where('type','teacher')
-                          ->sum('amount');
-
-        // 3) hours per subject
-        $hoursPerSubject = DB::table('attendances')
-            ->join('schedules','attendances.schedule_id','=','schedules.id')
-            ->join('subjects','schedules.subject_id','=','subjects.id')
-            ->select(
-                'subjects.id   as subject_id',
-                'subjects.name as subject_name',
-                DB::raw('SUM(attendances.hours) as hours')
-            )
-            ->where('attendances.teacher_id',$teacherId)
-            ->where('attendances.status','present')
-            ->groupBy('subjects.id','subjects.name')
-            ->get();
-
-        $out['total_hours']       = $totalHours;
-        $out['total_payments']    = $totalPayments;
-        $out['payment_method']    = $user->teacher->payment_method;
-        $out['hours_per_subject'] = $hoursPerSubject;
+        return response()->json(array_merge($base, [
+          'payment_method' => $teacher->payment_method,
+          'modules'        => $modules,
+          'total_due'      => $total,
+          'payments'       => $payments,
+        ]));
     }
 
-    return response()->json($out);
+    // student or admin
+    return response()->json($base);
 }
-
-
 
 
 

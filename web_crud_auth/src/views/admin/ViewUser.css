@@ -105,4 +105,8 @@
     margin-top: 2rem;
     color: #1976d2;
   }
-  
+  .status.completed { background:#d4edda; color:#155724; padding:4px; border-radius:4px; }
+.status.pending   { background:#fff3cd; color:#856404; padding:4px; border-radius:4px; }
+.classes-table, .payment-history table { width:100%; border-collapse:collapse; margin-top:1rem; }
+.classes-table th, .classes-table td,
+.payment-history th, .payment-history td { border:1px solid #eee; padding:8px; text-align:left; }

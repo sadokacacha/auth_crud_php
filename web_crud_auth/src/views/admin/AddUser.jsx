@@ -20,18 +20,21 @@ export default function AddUser() {
   const [subjects, setSubjects] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
 
-  // Fetch subjects and classrooms
   useEffect(() => {
     axiosClient.get('/subjects').then(({ data }) => setSubjects(data));
     axiosClient.get('/classrooms').then(({ data }) => setClassrooms(data));
   }, []);
 
   const onChange = e => {
-    const { name, value, multiple, options } = e.target;
+    const { name, value, multiple, options, type } = e.target;
 
     if (multiple) {
-      const selected = [...options].filter(o => o.selected).map(o => o.value);
-      setForm(prev => ({ ...prev, [name]: selected }));
+      const selectedValues = Array.from(options)
+        .filter(option => option.selected)
+        .map(option => option.value);
+      setForm(prev => ({ ...prev, [name]: selectedValues }));
+    } else if (type === 'number') {
+      setForm(prev => ({ ...prev, [name]: value ? parseFloat(value) : '' }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -54,17 +57,18 @@ export default function AddUser() {
     <div>
       <h2>Create User</h2>
       <form onSubmit={onSubmit}>
+
         <label>Name:</label>
         <input name="name" value={form.name} onChange={onChange} />
-        {errors.name && <p>{errors.name[0]}</p>}
+        {errors.name && <p className="error">{errors.name[0]}</p>}
 
         <label>Email:</label>
         <input name="email" value={form.email} onChange={onChange} />
-        {errors.email && <p>{errors.email[0]}</p>}
+        {errors.email && <p className="error">{errors.email[0]}</p>}
 
         <label>Password:</label>
         <input type="password" name="password" value={form.password} onChange={onChange} />
-        {errors.password && <p>{errors.password[0]}</p>}
+        {errors.password && <p className="error">{errors.password[0]}</p>}
 
         <label>Role:</label>
         <select name="role" value={form.role} onChange={onChange}>
@@ -72,14 +76,22 @@ export default function AddUser() {
           <option value="teacher">Teacher</option>
           <option value="student">Student</option>
         </select>
-        {errors.role && <p>{errors.role[0]}</p>}
+        {errors.role && <p className="error">{errors.role[0]}</p>}
 
-        {/* Show these fields only if teacher is selected */}
         {form.role === 'teacher' && (
-          <>
+          <fieldset>
+            <legend>Teacher Details</legend>
+
             <label>Hourly Rate:</label>
-            <input name="hourly_rate" value={form.hourly_rate} onChange={onChange} />
-            {errors.hourly_rate && <p>{errors.hourly_rate[0]}</p>}
+            <input
+              type="number"
+              name="hourly_rate"
+              value={form.hourly_rate}
+              onChange={onChange}
+              step="0.01"
+              min="0"
+            />
+            {errors.hourly_rate && <p className="error">{errors.hourly_rate[0]}</p>}
 
             <label>Payment Method:</label>
             <select name="payment_method" value={form.payment_method} onChange={onChange}>
@@ -87,24 +99,38 @@ export default function AddUser() {
               <option value="check">Check</option>
               <option value="bank">Bank</option>
             </select>
-            {errors.payment_method && <p>{errors.payment_method[0]}</p>}
+            {errors.payment_method && <p className="error">{errors.payment_method[0]}</p>}
 
             <label>Subjects:</label>
-            <select name="subject_ids" multiple onChange={onChange} value={form.subject_ids}>
+            <select
+              name="subject_ids"
+              multiple
+              value={form.subject_ids}
+              onChange={onChange}
+            >
               {subjects.map(subject => (
-                <option key={subject.id} value={subject.id}>{subject.name}</option>
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
               ))}
             </select>
-            {errors.subject_ids && <p>{errors.subject_ids[0]}</p>}
+            {errors.subject_ids && <p className="error">{errors.subject_ids[0]}</p>}
 
             <label>Classrooms:</label>
-            <select name="classroom_ids" multiple onChange={onChange} value={form.classroom_ids}>
+            <select
+              name="classroom_ids"
+              multiple
+              value={form.classroom_ids}
+              onChange={onChange}
+            >
               {classrooms.map(classroom => (
-                <option key={classroom.id} value={classroom.id}>{classroom.name}</option>
+                <option key={classroom.id} value={classroom.id}>
+                  {classroom.name}
+                </option>
               ))}
             </select>
-            {errors.classroom_ids && <p>{errors.classroom_ids[0]}</p>}
-          </>
+            {errors.classroom_ids && <p className="error">{errors.classroom_ids[0]}</p>}
+          </fieldset>
         )}
 
         <button type="submit">Create</button>

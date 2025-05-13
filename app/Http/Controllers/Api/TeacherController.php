@@ -15,29 +15,50 @@ class TeacherController extends Controller
         return response()->json($teachers);
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'user_id'         => 'required|exists:users,id',
-            'hourly_rate'     => 'required|numeric',
-            'payment_method'  => 'required|in:check,cash,bank',
-            'subjects'        => 'array',
-            'subjects.*'      => 'exists:subjects,id',
-            'classrooms'      => 'array',
-            'classrooms.*'    => 'exists:classrooms,id',
-        ]);
+   public function store(Request $request)
+{
+    $data = $request->validate([
+      'user_id'           => 'required|exists:users,id',
+      'hourly_rate'       => 'required|numeric',
+      'payment_method'    => 'required|in:check,cash,bank',
+      'subjects'          => 'array',
+      'subjects.*'        => 'exists:subjects,id',
+      'classroom_subjects'   => 'required|array',
+      'classroom_subjects.*.classroom_id' => 'required|exists:classrooms,id',
+      'classroom_subjects.*.subject_ids'  => 'required|array',
+      'classroom_subjects.*.subject_ids.*'=> 'exists:subjects,id',
+    ]);
 
-        $teacher = Teacher::create([
-            'user_id'        => $data['user_id'],
-            'hourly_rate'    => $data['hourly_rate'],
-            'payment_method' => $data['payment_method'],
-        ]);
+    // 1) Create the Teacher
+    $teacher = Teacher::create([
+      'user_id'        => $data['user_id'],
+      'hourly_rate'    => $data['hourly_rate'],
+      'payment_method' => $data['payment_method'],
+    ]);
 
-        $teacher->subjects()->sync($data['subjects'] ?? []);
-        $teacher->classrooms()->sync($data['classrooms'] ?? []);
+    // 2) Sync plain subjects (for quick lookup/filter)
+    $teacher->subjects()->sync($data['subjects'] ?? []);
 
-        return response()->json($teacher->load('subjects', 'classrooms'), 201);
+
+    $attach = [];
+    foreach ($data['classroom_subjects'] as $cs) {
+      foreach ($cs['subject_ids'] as $subId) {
+        $attach[] = [
+          'classroom_id' => $cs['classroom_id'],
+          'subject_id'   => $subId,
+        ];
+      }
     }
+    // detach existing to avoid dupes, then re-attach
+    $teacher->classrooms()->detach();
+    foreach ($attach as $pivot) {
+      $teacher->classrooms()->attach($pivot['classroom_id'], [
+        'subject_id' => $pivot['subject_id'],
+      ]);
+    }
+
+    return response()->json($teacher->load('subjects','classrooms'), 201);
+}
 
     public function show($id)
     {

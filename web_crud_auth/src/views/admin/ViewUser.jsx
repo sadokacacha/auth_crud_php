@@ -18,21 +18,26 @@ export default function ViewUser() {
     role: '',
   });
 
-  useEffect(() => {
-    axiosClient.get(`/users/${id}`)
-      .then(({ data }) => {
-        setUser(data);
-        setFormData({
-          name: data.name,
-          email: data.email,
-          phone: data.phone || '',
-          address: data.address || '',
-          role: data.role,
-        });
-      })
-      .catch(console.error);
-  }, [id]);
+const [payments, setPayments] = useState([]);
 
+useEffect(() => {
+  axiosClient.get(`/users/${id}`)
+    .then(({ data }) => {
+      setUser(data);
+      setFormData({
+        name: data.name,
+        email: data.email,
+        phone: data.phone || '',
+        address: data.address || '',
+        role: data.role,
+      });
+    })
+    .catch(console.error);
+
+  axiosClient.get(`/payments/user/${id}`)
+    .then(({ data }) => setPayments(data))
+    .catch(console.error);
+}, [id]);
   const handleSave = () => {
     axiosClient.put(`/users/${id}`, formData)
       .then(() => {
@@ -124,20 +129,53 @@ export default function ViewUser() {
               <p>{user.email}</p>
 
 
-{user.role === 'teacher' && (
-  <div className="teacher-stats">
-    <p><strong>Total Hours Taught:</strong> {user.total_hours}</p>
-    <p><strong>Payment Method:</strong> {user.payment_method}</p>
-    <p><strong>Total Payments:</strong> ${user.total_payments}</p>
-    <ul>
-      {user.hours_per_subject.map(s => (
-        <li key={s.subject_id}>
-          {s.subject_name}: {s.hours} hrs
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
+   {user.role==='teacher' && (
+        <>
+          <section className="classes-table">
+            <h3>Classes</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Hours (Done/Total)</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {user.modules.map((m,i)=>(
+                  <tr key={i}>
+                    <td>{m.name}</td>
+                    <td>{m.hours_done}/{m.hours_required}</td>
+                    <td>${m.price.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td colSpan="2"><strong>Total Due</strong></td>
+                  <td><strong>${user.total_due.toFixed(2)}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section className="payment-history">
+            <h3>Payment History</h3>
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Amount</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {user.payments.map(p=>(
+                  <tr key={p.id}>
+                    <td>{new Date(p.date).toLocaleDateString()}</td>
+                    <td>${p.amount}</td>
+                    <td><span className={`status ${p.status}`}>{p.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
+      )}
 
 
 

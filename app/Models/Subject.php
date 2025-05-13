@@ -7,13 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subject extends Model
 {
-    use HasFactory;
-
-    protected $fillable = ['name'];
+    protected $fillable = ['name','total_hours'];
 
     public function teachers()
     {
         return $this->belongsToMany(Teacher::class, 'subject_teacher')
+                    ->withPivot('hours_done')
                     ->withTimestamps();
     }
 }

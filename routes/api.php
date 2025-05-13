@@ -65,18 +65,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get ( '/attendance/history/{id}',  [AttendanceController::class, 'history'] );
 
         // **Payments** (unified student & teacher)
-        Route::post   ('/payments',          [PaymentController::class, 'store']);
-        Route::get    ('/payments/user/{id}',[PaymentController::class, 'byUser']);
-        Route::put    ('/payments/{id}',     [PaymentController::class, 'update']);
-        Route::delete ('/payments/{id}',     [PaymentController::class, 'destroy']);
+// 🧾 Payments (Unified)
+Route::post   ('/payments',           [PaymentController::class, 'store']);
+Route::get    ('/payments/user/{id}', [PaymentController::class, 'history']);
+Route::put    ('/payments/{id}',      [PaymentController::class, 'update']);
+Route::delete ('/payments/{id}',      [PaymentController::class, 'destroy']);
 
-        // **Student-only payments** (if you still need separate endpoints)
-        Route::post('/student-payments',         [StudentPaymentController::class, 'store']);
-        Route::get('/students/{id}/payments',    [StudentPaymentController::class, 'byStudent']);
-
-        // **Teacher-only summaries**
-        Route::get('/teachers/{id}/payments/summary', [TeacherPaymentController::class,'summary']);
-        Route::get('/teachers/{id}/payments/history', [TeacherPaymentController::class,'history']);
-        Route::post('/teachers/{id}/payments/mark-paid',[TeacherPaymentController::class,'markAsPaid']);
+// Teacher auto-summary
+Route::get  ('/payments/teacher/summary', [PaymentController::class, 'teacherSummary']);
+Route::post ('/payments/teacher/{id}/mark-paid', [PaymentController::class, 'markTeacherPaid']);
     });
 });
