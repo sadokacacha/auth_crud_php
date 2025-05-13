@@ -7,13 +7,14 @@ use Illuminate\Database\Seeder;
 
 class SubjectSeeder extends Seeder
 {
-    public function run()
-    {
-        $subjects = ['Math', 'Science', 'History', 'English', 'Art'];
+ 
+public function run()
+{
+    $subjects = ['Math', 'Science', 'History', 'English'];
 
-        foreach ($subjects as $subject) {
-            Subject::create(['name' => $subject]);
-        }
+    foreach ($subjects as $subject) {
+        Subject::firstOrCreate(['name' => $subject]);
     }
+}
 }
 

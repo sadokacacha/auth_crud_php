@@ -13,6 +13,7 @@ use App\Models\Schedule;
 use App\Models\Attendance;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -38,52 +39,81 @@ class UserController extends Controller
 
 
     // GET /api/users/{id}
-public function show($id)
+   public function show($id)
 {
     $user = User::with('roles')->findOrFail($id);
     $role = $user->roles->pluck('name')->first();
 
     $base = [
-      'id'    => $user->id,
-      'name'  => $user->name,
-      'email' => $user->email,
-      'role'  => $role,
+        'id'    => $user->id,
+        'name'  => $user->name,
+        'email' => $user->email,
+        'role'  => $role,
     ];
 
-    // teacher
+    // If it’s a teacher, build their detailed breakdown
     if ($role === 'teacher') {
-        $teacher = $user->teacher;
+        $teacher    = $user->teacher;
+        $hourlyRate = $teacher->hourly_rate;
+        $today      = Carbon::now()->startOfMonth();
+
+        // Eager‑load schedules and their attendances
+        $schedules = Schedule::with('attendances')
+            ->where('teacher_id', $teacher->id)
+            ->whereDate('day_of_week','>=',$today) // only this month
+            ->get();
+
+        // Group schedules by subject
+        $bySubject = $schedules->groupBy('subject_id');
+
         $modules = [];
         $total   = 0;
-        foreach ($teacher->subjects as $sub) {
-            $done    = $sub->pivot->hours_done;
-            $totalH  = $sub->total_hours;
-            $price   = $done * $teacher->hourly_rate;
+
+        foreach ($bySubject as $subjectId => $group) {
+            $sub = $group->first()->subject;
+            
+            // 1) total scheduled hours for this subject
+            $scheduledHours = $group->sum(function($sch){
+                $start = Carbon::parse($sch->start_time);
+                $end   = Carbon::parse($sch->end_time);
+                return $end->diffInMinutes($start) / 60;
+            });
+
+            // 2) total *attended* hours (via attendance records)
+            $attendedHours = Attendance::whereIn('schedule_id', $group->pluck('id'))
+                ->whereMonth('date', $today->month)
+                ->whereYear('date', $today->year)
+                ->sum('hours');
+
+            $due = $attendedHours * $hourlyRate;
+            $total += $due;
+
             $modules[] = [
-              'name'           => $sub->name,
-              'hours_done'     => $done,
-              'hours_required' => $totalH,
-              'price'          => $price,
+                'id'               => $sub->id,
+                'name'             => $sub->name,
+                'hours_required'   => round($scheduledHours,2),
+                'hours_done'       => round($attendedHours,2),
+                'price_per_hour'   => $hourlyRate,
+                'price_due'        => round($due,2),
             ];
-            $total += $price;
         }
+
+        // pull in any manual payments they’ve received
         $payments = Payment::where('user_id', $user->id)
-                           ->orderBy('date','desc')
-                           ->get();
+                            ->orderBy('date','desc')
+                            ->get(['id','amount','status','date']);
 
         return response()->json(array_merge($base, [
-          'payment_method' => $teacher->payment_method,
-          'modules'        => $modules,
-          'total_due'      => $total,
-          'payments'       => $payments,
+            'payment_method' => $teacher->payment_method,
+            'modules'        => $modules,
+            'total_due'      => round($total,2),
+            'payments'       => $payments,
         ]));
     }
 
-    // student or admin
+    // student or admin — just basic info
     return response()->json($base);
 }
-
-
 
     // POST /api/users
     

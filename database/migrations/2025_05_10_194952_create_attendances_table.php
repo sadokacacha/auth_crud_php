@@ -13,7 +13,7 @@ return new class extends Migration
     {
     Schema::create('attendances', function (Blueprint $table) {
     $table->id();
-    $table->foreignId('teacher_id')->constrained('users');
+    $table->foreignId('teacher_id')->constrained('teachers');
     $table->foreignId('schedule_id')->constrained()->onDelete('cascade');
     $table->boolean('present')->default(false);
     $table->integer('hours')->nullable(); // actual hours taught

@@ -34,7 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
         // Users, Teachers, Classrooms, Subjects
         Route::apiResource('users',      UserController::class);
-        Route::apiResource('teachers',   TeacherController::class);
+        Route::apiResource('teachers', TeacherController::class);
         Route::apiResource('classrooms', ClassroomController::class);
         Route::apiResource('subjects',   SubjectController::class);
 
@@ -52,11 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get ( '/schedules/upcoming',   [ScheduleController::class, 'upcomingWeek'] );
         Route::get ( '/schedules/classroom/{id}', [ScheduleController::class, 'getByClassroom'] );
         Route::get ( '/schedules/teacher/{id}',   [ScheduleController::class, 'getByTeacher'] );
-            Route::get('/teachers/schedule', [ScheduleController::class, 'byPeriod']);
- Route::get('/schedules/today', [ScheduleController::class, 'today']);
-    Route::get('/schedules/week', [ScheduleController::class, 'week']);
-    Route::get('/schedules/month', [ScheduleController::class, 'month']);
-    Route::post('/attendance/mark', [AttendanceController::class,'mark']);
+        Route::get('/teachers/schedule', [ScheduleController::class, 'byPeriod']);
+        Route::get('/schedules/today', [ScheduleController::class, 'today']);
+        Route::get('/schedules/week', [ScheduleController::class, 'week']);
+        Route::get('/schedules/month', [ScheduleController::class, 'month']);
+        Route::post('/attendance/mark', [AttendanceController::class,'mark']);
 
         // **Attendance**
         Route::get ( '/attendance/today',         [AttendanceController::class, 'today'] );
@@ -65,14 +65,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get ( '/attendance/history/{id}',  [AttendanceController::class, 'history'] );
 
         // **Payments** (unified student & teacher)
-// 🧾 Payments (Unified)
-Route::post   ('/payments',           [PaymentController::class, 'store']);
-Route::get    ('/payments/user/{id}', [PaymentController::class, 'history']);
-Route::put    ('/payments/{id}',      [PaymentController::class, 'update']);
-Route::delete ('/payments/{id}',      [PaymentController::class, 'destroy']);
 
-// Teacher auto-summary
-Route::get  ('/payments/teacher/summary', [PaymentController::class, 'teacherSummary']);
-Route::post ('/payments/teacher/{id}/mark-paid', [PaymentController::class, 'markTeacherPaid']);
+Route::post   ('/payments',               [PaymentController::class,'store']);
+Route::get    ('/payments/user/{id}',     [PaymentController::class,'history']);
+Route::put    ('/payments/{id}',          [PaymentController::class,'update']);
+Route::delete ('/payments/{id}',          [PaymentController::class,'destroy']);
+
+
+Route::get    ('/payments/teacher/summary',[PaymentController::class,'teacherSummary']);
+Route::post   ('/payments/teacher/{id}/mark-paid',[PaymentController::class,'markTeacherPaid']);
     });
 });
