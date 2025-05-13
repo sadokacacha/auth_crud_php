@@ -241,4 +241,20 @@ public function nextWeek()
         ->get();
     return response()->json($schedules);
 }
+
+
+public function byPeriod(Request $request)
+{
+    $period = $request->query('period','today');
+
+    return match($period) {
+        'this_week' => $this->week(),
+        'next_week' => $this->nextWeek(),
+        default     => $this->today(),
+    };
+}
+
+
+
+
 }

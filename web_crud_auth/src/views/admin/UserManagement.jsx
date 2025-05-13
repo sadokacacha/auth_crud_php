@@ -1,3 +1,4 @@
+// src/components/UserManagement.jsx
 import { useEffect, useState, Fragment } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../../axios-client';
@@ -23,128 +24,147 @@ export default function UserManagement() {
 
   useEffect(() => {
     if (filteredRole === 'teacher') {
-      fetchSchedule(scheduleTab);
+      const endpoint =
+        scheduleTab === 'today' ? '/emploi/today' :
+        scheduleTab === 'this_week' ? '/emploi/week' :
+        '/emploi/next-week';
+
+      axiosClient.get(endpoint)
+        .then(({ data }) => setTeachingSchedule(data.schedules || data))
+        .catch(console.error);
     }
   }, [filteredRole, scheduleTab]);
 
-  const fetchSchedule = (period) => {
-    axiosClient.get(`/teachers/schedule?period=${period}`)
-      .then(({ data }) => setTeachingSchedule(data))
+  const fetchPayments = id =>
+    axiosClient.get(`/students/${id}/payments`)
+      .then(({ data }) => setPayments(p => ({ ...p, [id]: data })))
       .catch(console.error);
+
+  const togglePaymentBox = id => {
+    if (activePaymentUserId === id) {
+      setActivePaymentUserId(null);
+    } else {
+      setActivePaymentUserId(id);
+      fetchPayments(id);
+    }
   };
 
-  const fetchPayments = (userId) => {
-    axiosClient.get(`/students/${userId}/payments`)
-      .then(({ data }) => {
-        setPayments(prev => ({ ...prev, [userId]: data }));
-      })
-      .catch(console.error);
-  };
-
-  const togglePaymentBox = (userId) => {
-    const isSame = activePaymentUserId === userId;
-    setActivePaymentUserId(isSame ? null : userId);
-    if (!isSame) fetchPayments(userId);
-  };
-
-  const handleAddPayment = (userId) => {
+  const addPayment = id => {
     if (!newAmount) return;
-    axiosClient.post(`/students/${userId}/payments`, { amount: newAmount })
-      .then(() => {
-        fetchPayments(userId);
-        setNewAmount('');
-      })
-      .catch(console.error);
+    axiosClient.post(`/student-payments`, {
+      student_id: id,
+      amount: newAmount,
+      method: 'cash',
+      date: new Date().toISOString().slice(0, 10),
+      plan_type: 'full'
+    })
+    .then(() => {
+      fetchPayments(id);
+      setNewAmount('');
+    })
+    .catch(console.error);
   };
 
   const filteredUsers = users.filter(u => u.role === filteredRole);
 
   return (
     <div className="user-management-container">
-      <div className="user-management-header">
+      <header className="user-management-header">
         <h2>User Management</h2>
         <div>
-          <Link to="/admin/users/new" className="add-user-btn">+ Add New User</Link>
-          <Link to="/admin/schedule" className="btn-schedule">📅 View Full Schedule</Link>
+          <Link to="/admin/users/new" className="add-user-btn">+ Add User</Link>
+          <Link to="/admin/schedule" className="btn-schedule">📅 Full Schedule</Link>
         </div>
-      </div>
+      </header>
 
-      <div className="role-filter-buttons">
-        {['admin','teacher','student'].map(role => (
+      <nav className="role-filter-buttons">
+        {['admin', 'teacher', 'student'].map(r => (
           <button
-            key={role}
-            className={filteredRole === role ? 'active' : ''}
-            onClick={() => setFilteredRole(role)}
+            key={r}
+            className={filteredRole === r ? 'active' : ''}
+            onClick={() => setFilteredRole(r)}
           >
-            {role.charAt(0).toUpperCase() + role.slice(1)}s
+            {r.charAt(0).toUpperCase() + r.slice(1)}s
           </button>
         ))}
-      </div>
+      </nav>
 
-      <div className="table-container">
+      <section className="table-container">
         <table className="user-table">
           <thead>
             <tr>
               <th>Name</th><th>Email</th><th>Role</th>
               {(filteredRole === 'teacher' || filteredRole === 'student') && <th>Actions</th>}
+              <th>{/* Go to Profile Arrow */}</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map(user => (
-              <Fragment key={user.id}>
-                <tr
-                  className="clickable-row"
-                  onClick={() => navigate(`/admin/users/${user.id}`)}
-                >
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td className="role-cell">{user.role}</td>
+            {filteredUsers.map(u => (
+              <Fragment key={u.id}>
+                <tr className="clickable-row" onClick={() => navigate(`/admin/users/${u.id}`)}>
+                  <td>{u.name}</td>
+                  <td>{u.email}</td>
+                  <td className="role-cell">{u.role}</td>
+
                   {filteredRole === 'teacher' && (
                     <td>
                       <Link
-                        to={`/admin/users/${user.id}/schedule`}
+                        to={`/admin/users/${u.id}/schedule`}
                         className="btn-schedule"
                         onClick={e => e.stopPropagation()}
                       >
-                        📆 View Schedule
+                        📆 Schedule
                       </Link>
                     </td>
                   )}
+
                   {filteredRole === 'student' && (
                     <td>
                       <button
                         className="btn-payment"
-                        onClick={e => {
-                          e.stopPropagation();
-                          togglePaymentBox(user.id);
-                        }}
+                        onClick={e => { e.stopPropagation(); togglePaymentBox(u.id); }}
                       >
-                        💳 Manage Payment
+                        💳 Payments
                       </button>
                     </td>
                   )}
+
+                  {/* Arrow Icon */}
+                  <td>
+                    <Link
+                      to={`/admin/users/${u.id}`}
+                      className="profile-arrow"
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        fontSize: '1.25rem',
+                        textDecoration: 'none',
+                        display: 'inline-block',
+                        padding: '0.25rem 0.5rem'
+                      }}
+                    >
+                      &gt;
+                    </Link>
+                  </td>
                 </tr>
 
-                {filteredRole === 'student' && activePaymentUserId === user.id && (
-                  <tr className="payment-row" key={`payment-${user.id}`}>
-                    <td colSpan="4">
+                {filteredRole === 'student' && activePaymentUserId === u.id && (
+                  <tr className="payment-row" key={`pay-${u.id}`}>
+                    <td colSpan="5">
                       <div className="payment-box">
-                        <h4>Payments for {user.name}</h4>
+                        <h4>Payments for {u.name}</h4>
                         <ul>
-                          {(payments[user.id] || []).map(p => (
-                            <li key={p.id}>
-                              💰 ${p.amount} — {new Date(p.date).toLocaleDateString()}
-                            </li>
+                          {(payments[u.id] || []).map(p => (
+                            <li key={p.id}>${p.amount} — {new Date(p.date).toLocaleDateString()}</li>
                           ))}
                         </ul>
                         <div className="payment-form">
                           <input
                             type="number"
-                            placeholder="Enter amount"
+                            placeholder="Amount"
                             value={newAmount}
                             onChange={e => setNewAmount(e.target.value)}
                           />
-                          <button onClick={() => handleAddPayment(user.id)}>Add Payment</button>
+                          <button onClick={() => addPayment(u.id)}>Add</button>
                         </div>
                       </div>
                     </td>
@@ -154,48 +174,37 @@ export default function UserManagement() {
             ))}
           </tbody>
         </table>
-      </div>
+      </section>
 
-  {filteredRole === 'teacher' && (
-  <>
-    <div className="embedded-attendance-section">
-      <h3>📋 Attendance</h3>
-      <Attendance range={scheduleTab === 'this_week' ? 'week' : scheduleTab} />
-    </div>
-
-    <div className="schedule-tabs">
-      <h3>👩‍🏫 Who Teaches When?</h3>
-      <div className="tabs">
-        {[
-          { key: 'today', label: 'Today' },
-          { key: 'this_week', label: 'This Week' },
-          { key: 'next_week', label: 'Next Week' }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            className={scheduleTab === tab.key ? 'active' : ''}
-            onClick={() => setScheduleTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div className="schedule-list">
-        {teachingSchedule.length === 0
-          ? <p>No classes found for this period.</p>
-          : <ul>
-              {teachingSchedule.map((entry, idx) => (
-                <li key={entry.id ?? idx}>
-                  <strong>{entry.teacher_name}</strong> —{' '}
-                  {entry.classroom.name} — {entry.date} at {entry.start_time}
-                </li>
+      {filteredRole === 'teacher' && (
+        <>
+          <section className="schedule-tabs">
+            <div className="tabs">
+              {[
+                { key: 'today', label: 'Today' },
+                { key: 'this_week', label: 'This Week' },
+                { key: 'next_week', label: 'Next Week' },
+              ].map(t => (
+                <button
+                  key={t.key}
+                  className={scheduleTab === t.key ? 'active' : ''}
+                  onClick={() => setScheduleTab(t.key)}
+                >
+                  {t.label}
+                </button>
               ))}
-            </ul>
-        }
-      </div>
-    </div>
-  </>
-)}
+            </div>
+          </section>
+
+          <section className="embedded-attendance-section">
+            <h3>📋 Attendance ({scheduleTab.replace('_', ' ')})</h3>
+            <Attendance range={
+              scheduleTab === 'today' ? 'today' :
+              scheduleTab === 'this_week' ? 'week' : 'month'
+            } />
+          </section>
+        </>
+      )}
     </div>
   );
 }

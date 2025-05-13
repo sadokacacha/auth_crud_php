@@ -1,0 +1,26 @@
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.attendance-table th,
+.attendance-table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: left;
+}
+.status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+}
+.status.present {
+  background: #d4edda;
+  color: #155724;
+}
+.status.absent {
+  background: #f8d7da;
+  color: #721c24;
+}
+.status.none {
+  color: #6c757d;
+}

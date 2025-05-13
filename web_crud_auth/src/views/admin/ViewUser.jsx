@@ -126,11 +126,9 @@ export default function ViewUser() {
 
 {user.role === 'teacher' && (
   <div className="teacher-stats">
-    <h3>📊 Teaching Stats</h3>
     <p><strong>Total Hours Taught:</strong> {user.total_hours}</p>
     <p><strong>Payment Method:</strong> {user.payment_method}</p>
     <p><strong>Total Payments:</strong> ${user.total_payments}</p>
-    <h4>Hours by Subject:</h4>
     <ul>
       {user.hours_per_subject.map(s => (
         <li key={s.subject_id}>
@@ -140,7 +138,6 @@ export default function ViewUser() {
     </ul>
   </div>
 )}
-
 
 
 

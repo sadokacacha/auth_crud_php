@@ -81,20 +81,22 @@ public function mark(Request $request)
         'hours'       => 'required_if:status,present|numeric|min:1',
     ]);
 
-    // reject if already present today
-    $existing = Attendance::where([
-        ['schedule_id',$data['schedule_id']],
-        ['teacher_id', $data['teacher_id']],
-        ['date',       $data['date']],
-    ])->first();
+    // Build the payload for updateOrCreate
+    $payload = [
+        'present' => $data['status'] === 'present',   // <— map status→boolean
+        'hours'   => $data['status'] === 'present' 
+                     ? ($data['hours'] ?? 0) 
+                     : 0,
+    ];
 
-    if ($existing && $existing->status==='present' && $data['status']==='present') {
-        return response()->json(['message'=>'Already marked present today'], 422);
-    }
-
+    // Upsert
     $attendance = Attendance::updateOrCreate(
-        ['schedule_id'=>$data['schedule_id'],'teacher_id'=>$data['teacher_id'],'date'=>$data['date']],
-        ['status'=>$data['status'],'hours'=>$data['hours'] ?? 0]
+        [
+          'schedule_id' => $data['schedule_id'],
+          'teacher_id'  => $data['teacher_id'],
+          'date'        => $data['date'],
+        ],
+        $payload
     );
 
     return response()->json($attendance);

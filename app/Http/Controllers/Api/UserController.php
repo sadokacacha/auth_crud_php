@@ -12,6 +12,7 @@ use App\Models\Classroom;
 use App\Models\Schedule;
 use App\Models\Attendance;
 use App\Models\Payment;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -39,24 +40,51 @@ class UserController extends Controller
     // GET /api/users/{id}
 public function show($id)
 {
-    $user = User::with('teacher')->findOrFail($id);
+    $user = User::with('roles','teacher')->findOrFail($id);
 
-    if ($user->role === 'teacher') {
-        $totalHours = Attendance::whereHas('schedule', function ($q) use ($user) {
-            $q->where('teacher_id', $user->teacher->id);
-        })->where('status', 'present')->sum('hours');
+    // base shape
+    $out = [
+      'id'    => $user->id,
+      'name'  => $user->name,
+      'email' => $user->email,
+      'role'  => $user->roles->pluck('name')->first(),
+    ];
 
-        $totalPayments = Payment::where('user_id', $user->id)->sum('amount');
+    if ($out['role'] === 'teacher') {
+        $teacherId = $user->teacher->id;
 
-        $user->total_hours = $totalHours;
-        $user->total_payments = $totalPayments;
+        // 1) total hours taught
+        $totalHours = Attendance::where('teacher_id', $teacherId)
+                        ->where('status','present')
+                        ->sum('hours');
+
+        // 2) total payments (teacher)
+        $totalPayments = Payment::where('user_id', $user->id)
+                          ->where('type','teacher')
+                          ->sum('amount');
+
+        // 3) hours per subject
+        $hoursPerSubject = DB::table('attendances')
+            ->join('schedules','attendances.schedule_id','=','schedules.id')
+            ->join('subjects','schedules.subject_id','=','subjects.id')
+            ->select(
+                'subjects.id   as subject_id',
+                'subjects.name as subject_name',
+                DB::raw('SUM(attendances.hours) as hours')
+            )
+            ->where('attendances.teacher_id',$teacherId)
+            ->where('attendances.status','present')
+            ->groupBy('subjects.id','subjects.name')
+            ->get();
+
+        $out['total_hours']       = $totalHours;
+        $out['total_payments']    = $totalPayments;
+        $out['payment_method']    = $user->teacher->payment_method;
+        $out['hours_per_subject'] = $hoursPerSubject;
     }
 
-    return response()->json($user);
-    
+    return response()->json($out);
 }
-
-
 
 
 

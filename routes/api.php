@@ -52,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get ( '/schedules/upcoming',   [ScheduleController::class, 'upcomingWeek'] );
         Route::get ( '/schedules/classroom/{id}', [ScheduleController::class, 'getByClassroom'] );
         Route::get ( '/schedules/teacher/{id}',   [ScheduleController::class, 'getByTeacher'] );
+            Route::get('/teachers/schedule', [ScheduleController::class, 'byPeriod']);
+ Route::get('/schedules/today', [ScheduleController::class, 'today']);
+    Route::get('/schedules/week', [ScheduleController::class, 'week']);
+    Route::get('/schedules/month', [ScheduleController::class, 'month']);
+    Route::post('/attendance/mark', [AttendanceController::class,'mark']);
 
         // **Attendance**
         Route::get ( '/attendance/today',         [AttendanceController::class, 'today'] );

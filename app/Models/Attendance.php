@@ -5,8 +5,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
-protected $fillable = ['schedule_id', 'teacher_id', 'date', 'hours', 'status'];
-
+   protected $fillable = [
+      'schedule_id',
+      'teacher_id',
+      'date',
+      'present',  // not “status”
+      'hours',
+    ];
     public function schedule() {
         return $this->belongsTo(Schedule::class);
     }
