@@ -66,7 +66,6 @@ export default function UserManagement() {
         <div>
           <Link to="/admin/users/new" className="add-user-btn">+ Add New User</Link>
           <Link to="/admin/schedule" className="btn-schedule">📅 View Full Schedule</Link>
-          <Link to="/admin/attendance" className="btn-attendance">🗓️ View Attendance</Link>
         </div>
       </div>
 
@@ -157,46 +156,46 @@ export default function UserManagement() {
         </table>
       </div>
 
-      {filteredRole === 'teacher' && (
-        <>
-          <div className="embedded-attendance-section">
-            <h3>📋 Attendance for Today</h3>
-            <Attendance />
-          </div>
+  {filteredRole === 'teacher' && (
+  <>
+    <div className="embedded-attendance-section">
+      <h3>📋 Attendance</h3>
+      <Attendance range={scheduleTab === 'this_week' ? 'week' : scheduleTab} />
+    </div>
 
-          <div className="schedule-tabs">
-            <h3>👩‍🏫 Who Teaches When?</h3>
-            <div className="tabs">
-              {[
-                { key: 'today', label: 'Today' },
-                { key: 'this_week', label: 'This Week' },
-                { key: 'next_week', label: 'Next Week' }
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  className={scheduleTab === tab.key ? 'active' : ''}
-                  onClick={() => setScheduleTab(tab.key)}
-                >
-                  {tab.label}
-                </button>
+    <div className="schedule-tabs">
+      <h3>👩‍🏫 Who Teaches When?</h3>
+      <div className="tabs">
+        {[
+          { key: 'today', label: 'Today' },
+          { key: 'this_week', label: 'This Week' },
+          { key: 'next_week', label: 'Next Week' }
+        ].map(tab => (
+          <button
+            key={tab.key}
+            className={scheduleTab === tab.key ? 'active' : ''}
+            onClick={() => setScheduleTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="schedule-list">
+        {teachingSchedule.length === 0
+          ? <p>No classes found for this period.</p>
+          : <ul>
+              {teachingSchedule.map((entry, idx) => (
+                <li key={entry.id ?? idx}>
+                  <strong>{entry.teacher_name}</strong> —{' '}
+                  {entry.classroom.name} — {entry.date} at {entry.start_time}
+                </li>
               ))}
-            </div>
-            <div className="schedule-list">
-              {teachingSchedule.length === 0
-                ? <p>No classes found for this period.</p>
-                : <ul>
-                    {teachingSchedule.map((entry, idx) => (
-                      <li key={entry.id ?? idx}>
-                        <strong>{entry.teacher_name}</strong> —{' '}
-                        {entry.classroom.name} — {entry.date} at {entry.start_time}
-                      </li>
-                    ))}
-                  </ul>
-              }
-            </div>
-          </div>
-        </>
-      )}
+            </ul>
+        }
+      </div>
+    </div>
+  </>
+)}
     </div>
   );
 }

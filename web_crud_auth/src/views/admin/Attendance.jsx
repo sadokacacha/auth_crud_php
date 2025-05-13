@@ -2,25 +2,26 @@ import { useEffect, useState } from 'react';
 import axiosClient from '../../axios-client';
 import './Attendance.css'; // optional styling
 
-export default function Attendance() {
-  const [todaySchedule, setTodaySchedule] = useState([]);
+export default function Attendance({ range = 'today' }) {
+  const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // track status per schedule id: 'present' | 'absent'
   const [attendanceStatus, setAttendanceStatus] = useState({});
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     axiosClient
-      .get('/emploi/today')
+      .get(`/emploi/${range}`)
       .then(({ data }) => {
-        setTodaySchedule(Array.isArray(data) ? data : []);
+        setSchedule(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
-        console.error('Failed to load today’s schedule', err);
-        setError('Could not load today’s schedule.');
+        console.error('Failed to load schedule', err);
+        setError('Could not load schedule.');
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
   const handleMark = (schedId, status) => {
     axiosClient
@@ -41,21 +42,21 @@ export default function Attendance() {
       });
   };
 
-  if (loading) return <p>Loading today’s schedule…</p>;
-  if (error)   return <p style={{ color: 'red' }}>{error}</p>;
+  if (loading) return <p>Loading schedule…</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div className="attendance-page">
-      <h2>🗓️ Today’s Teaching Schedule</h2>
-      {todaySchedule.length === 0 && <p>No classes scheduled today.</p>}
+      <h2>🗓️ Teaching Schedule ({range.replace('_', ' ')})</h2>
+      {schedule.length === 0 && <p>No classes found.</p>}
 
-      {todaySchedule.map((s) => (
+      {schedule.map((s) => (
         <div key={s.id} className="attendance-card">
           <div>
             <strong>{s.teacher.user.name}</strong> — {s.subject.name} in {s.classroom.name}
           </div>
           <div>
-            {s.start_time} &ndash; {s.end_time}
+            {s.date} — {s.start_time} &ndash; {s.end_time}
           </div>
           <div>
             <em>Status:</em>{' '}

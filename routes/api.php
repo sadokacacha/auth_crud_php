@@ -17,61 +17,61 @@ use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\StudentDashboardController;
 
-// Public route
+// Public
 Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes
+// Authenticated
 Route::middleware('auth:sanctum')->group(function () {
-
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', fn(Request $request) => $request->user());
+    Route::get('/user', fn(Request $r) => $r->user());
 
-    // Dashboards (role-specific)
-    Route::get('/admin/dashboard',   [AdminDashboardController::class, 'index'])->middleware('role:admin');
+    // Dashboards
+    Route::get('/admin/dashboard',   [AdminDashboardController::class,   'index'])->middleware('role:admin');
     Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'index'])->middleware('role:teacher');
     Route::get('/student/dashboard', [StudentDashboardController::class, 'index'])->middleware('role:student');
 
-    // Admin-only routes
+    // **ADMIN ONLY**
     Route::middleware('role:admin')->group(function () {
-        // Resource management
-        Route::apiResource('users', UserController::class);
-    Route::apiResource('teachers', TeacherController::class);
-    Route::apiResource('classrooms', ClassroomController::class);
-    Route::apiResource('subjects', SubjectController::class);
-    Route::apiResource('schedules', ScheduleController::class)->except(['show']);
+        // Users, Teachers, Classrooms, Subjects
+        Route::apiResource('users',      UserController::class);
+        Route::apiResource('teachers',   TeacherController::class);
+        Route::apiResource('classrooms', ClassroomController::class);
+        Route::apiResource('subjects',   SubjectController::class);
 
-    // Additional schedule routes
-    Route::put('/schedules/{id}', [ScheduleController::class, 'update']);
-    Route::delete('/schedules/{id}', [ScheduleController::class, 'destroy']);
-    Route::post('/schedules/recurring', [ScheduleController::class, 'storeRecurring']);
-    Route::put('/schedules/recurring', [ScheduleController::class, 'updateRecurring']);
-    Route::delete('/schedules/recurring', [ScheduleController::class, 'deleteRecurring']);
-    Route::get('/schedules/upcoming', [ScheduleController::class, 'upcomingWeek']);
-    Route::get('/emploi/today',     [ScheduleController::class, 'today']);
-Route::get('/emploi/week',      [ScheduleController::class, 'week']);
-Route::get('/emploi/next-week', [ScheduleController::class, 'nextWeek']);
+        // **Schedules** (aka Emploi)
+        Route::get ( '/emploi/today',     [ScheduleController::class, 'today'] );
+        Route::get ( '/emploi/week',      [ScheduleController::class, 'week'] );
+        Route::get ( '/emploi/next-week', [ScheduleController::class, 'nextWeek'] );
+        Route::get ( '/schedules',            [ScheduleController::class, 'index'] );
+        Route::post( '/schedules',            [ScheduleController::class, 'store'] );
+        Route::put ( '/schedules/{id}',       [ScheduleController::class, 'update'] );
+        Route::delete('/schedules/{id}',      [ScheduleController::class, 'destroy'] );
+        Route::post( '/schedules/recurring',  [ScheduleController::class, 'storeRecurring'] );
+        Route::put ( '/schedules/recurring',  [ScheduleController::class, 'updateRecurring'] );
+        Route::delete('/schedules/recurring', [ScheduleController::class, 'deleteRecurring'] );
+        Route::get ( '/schedules/upcoming',   [ScheduleController::class, 'upcomingWeek'] );
+        Route::get ( '/schedules/classroom/{id}', [ScheduleController::class, 'getByClassroom'] );
+        Route::get ( '/schedules/teacher/{id}',   [ScheduleController::class, 'getByTeacher'] );
 
+        // **Attendance**
+        Route::get ( '/attendance/today',         [AttendanceController::class, 'today'] );
+        Route::post( '/attendance',               [AttendanceController::class, 'store'] );
+        Route::put ( '/attendance/{attendance}',  [AttendanceController::class, 'update'] );
+        Route::get ( '/attendance/history/{id}',  [AttendanceController::class, 'history'] );
 
+        // **Payments** (unified student & teacher)
+        Route::post   ('/payments',          [PaymentController::class, 'store']);
+        Route::get    ('/payments/user/{id}',[PaymentController::class, 'byUser']);
+        Route::put    ('/payments/{id}',     [PaymentController::class, 'update']);
+        Route::delete ('/payments/{id}',     [PaymentController::class, 'destroy']);
 
-    // Schedule and attendance
-    Route::get('/emploi/today', [ScheduleController::class, 'today']);
-    Route::get('/attendance/today', [AttendanceController::class, 'today']);
-    Route::post('/attendance', [AttendanceController::class, 'store']);
-    Route::put('/attendance/{att}', [AttendanceController::class, 'update']);
-    Route::get('/attendance/history/{id}', [AttendanceController::class, 'history']);
-    Route::get('/teacher-attendance', [AttendanceController::class, 'index']);
+        // **Student-only payments** (if you still need separate endpoints)
+        Route::post('/student-payments',         [StudentPaymentController::class, 'store']);
+        Route::get('/students/{id}/payments',    [StudentPaymentController::class, 'byStudent']);
 
-
-    // Payments
-    Route::apiResource('payments', PaymentController::class)->only(['store', 'update', 'destroy']);
-    Route::get('/payments/user/{id}', [PaymentController::class, 'byUser']);
-
-    // Student payments
-    Route::post('/student-payments', [StudentPaymentController::class, 'store']);
-    Route::get('/students/{id}/payments', [StudentPaymentController::class, 'byStudent']);
-
-    // Teacher payment summaries
-    Route::get('/teachers/{id}/payments/summary', [TeacherPaymentController::class, 'summary']);
-    Route::get('/teachers/{id}/payments/history', [TeacherPaymentController::class, 'history']);
+        // **Teacher-only summaries**
+        Route::get('/teachers/{id}/payments/summary', [TeacherPaymentController::class,'summary']);
+        Route::get('/teachers/{id}/payments/history', [TeacherPaymentController::class,'history']);
+        Route::post('/teachers/{id}/payments/mark-paid',[TeacherPaymentController::class,'markAsPaid']);
     });
 });
